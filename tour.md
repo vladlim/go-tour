@@ -80,6 +80,77 @@
   - [Generic интерфейсы](#generic-интерфейсы)
   - [Разница generic и interface](#разница-generic-и-interface)
 - [Горутины](#горутины)
+  - [Контекст горутин](#контекст-горутин)
+  - [Синтаксис горутин](#синтаксис-горутин)
+  - [Sleep](#sleep)
+  - [Синхронизация горутин и WaitGroup](#синхранизация-горутин-и-waitgroup)
+- [Каналы](#каналы)
+  - [Оператор канала <-](#оператор-канала)
+  - [Небуферизованные каналы](#небуферизованные-каналы)
+  - [Обмен данных через каналы](#обмен-данных-через-каналы)
+  - [Буферизованные каналы](#буферизованные-каналы)
+  - [Возвращение канала](#возвращение-канала)
+  - [Закрытие канала](#закрытие-канала)
+  - [Двунаправленные и однонаправленные каналы](#двунаправленные-и-однонаправленные-каналы)
+  - [Синхронизация горутин через каналы](#синхронизация-горутин-через-каналы)
+  - [Получение значений канала в цикле](#получение-значений-канала-в-цикле)
+  - [Подходы использования каналов](#подходы-использования-каналов)
+- [Гонка данных и обнаружение](#гонка-данных-и-обнаружение)
+- [Mutex](#mutex)
+- [RWMutex](#rwmutex)
+- [Обработка ошибок](#обработка-ошибок)
+  - [errors.New()](<#errors.New()>)
+  - [Wrapping](#wrapping)
+  - [Unwrapping](#unwrapping)
+  - [errors.Is() и errors.As()](<#errors.Is()-и-errors.As()>)
+  - [panic(), defer, recover()](<#panic()-defer-recover()>)
+- [Контекст](#контекст)
+  - [context.Background](#contextbackground)
+  - [context.TODO](#contexttodo)
+  - [context.WithCancel](#contextwithcancel)
+  - [context.WithTimeout](#contextwithtimeout)
+  - [context.WithDeadline](#contextwithdeadline)
+  - [context.WithValue](#contextwithvalue)
+  - [context.Done](#contextdone)
+  - [context.Err](#contexterr)
+  - [context.Deadline](#contextdeadline)
+  - [context.Value](#contextvalue)
+  - [context.WithCancelCause](#contextwithcancelcause)
+  - [context.Cause](#contextcause)
+  - [context.AfterFunc](#contextafterfunc)
+  - [Context SHPORA](#context-shpora)
+- [Garbage collector](#garbage-collector)
+  - [Куча и стэк](#куча-и-стэк)
+    - [Стэк](#стэк)
+    - [Куча](#куча)
+    - [escape analysis](#escape-analysis)
+  - [Механизм работы](#механизм-работы)
+  - [Запуск GC](#gc-start)
+  - [Задать GOGC](#задать-gogc)
+  - [GOMEMLIMIT](#gomemlimit)
+  - [Памятка по GC](#памятка-по-gc)
+- [Scheduler](#scheduler)
+  - [GMP](#gmp)
+    - [Goroutine](#goroutine)
+    - [Machine](#machine)
+    - [Processor](#processor)
+    - [Связь GMP](#связь-gmp)
+    - [GOMAXPROCS](#gomaxprocs)
+  - [Состояния goroutine](#состояния-goroutine)
+  - [Очереди Scheduler](#очереди-scheduler)
+    - [Local run queue](#local-run-queue)
+    - [Global run queue](#global-run-queue)
+    - [Work stealing](#work-stealing)
+  - [Что происходит при go f()](#что-происходит-при-go-f)
+  - [Поведение при блокировках](#поведение-при-блокировках)
+    - [При блокировке на channel](#при-блокировке-на-channel)
+    - [При time.Sleep](#блокировка-при-time.sleep)
+    - [При mutex](#при-mutex)
+    - [Network I/O и netpoller](#network-io-и-netpoller)
+    - [При syscall](#при-syscall)
+  - [Preemption](#preemption)
+  - [Общая схема и заключение](#общая-схема-и-заключение)
+- [Строки](#строки)
 
 ---
 
@@ -99,10 +170,14 @@
 
 Программа начинает работу из пакета main.
 
+---
+
 Пакеты бывают:
 
 - исполняемые/executable (main)
 - библиотеки/reusable
+
+---
 
 ### Импорт пакетов
 
@@ -182,6 +257,8 @@ func main() {
 }
 ```
 
+---
+
 ### GOROOT
 
 GOROOT - папка с установленным Go SDK.
@@ -241,6 +318,8 @@ GOROOT/
 go env GOROOT
 ```
 
+---
+
 ### GOPATH
 
 GOPATH - рабочая область/кеш установленных внешних пакетов Go: модули, бинарники.
@@ -266,6 +345,8 @@ GOPATH/
       cache
       ...
 ```
+
+---
 
 ### Пакеты, поиск
 
@@ -432,6 +513,8 @@ import "github.com/google/uuid"
     -> иначе: GOMODCACHE, а если нет — скачать
 ```
 
+---
+
 ### vendor
 
 vendor - это папка внутри проекта, куда можно положить копии зависимостей.
@@ -486,6 +569,8 @@ vendor используют если хотим:
 
 Если зависимости поменяются, вендор приходится обновлять. При этом нужно следить за соответствием go.mod и vendor.
 
+---
+
 ### Режимы сборки
 
 Есть два основных режима сборки проекта:
@@ -503,6 +588,8 @@ go build -mod-=vendor
 ```
 
 В зависимости от режима Go будет искать внешние зависимости в кеше или вендоре.
+
+---
 
 ## GO ENV
 
@@ -587,6 +674,8 @@ GOFLAGS     — глобальные флаги go-команд
 ```bash
 go clean -modcache # Чистка кеша модулей
 ```
+
+---
 
 ## Основные команды go
 
@@ -964,6 +1053,8 @@ go generate ./...     — запустить генераторы
 go work ...           — работа с multi-module workspace
 ```
 
+---
+
 ## Типы данных
 
 Основные встроенные типы:
@@ -976,6 +1067,8 @@ go work ...           — работа с multi-module workspace
 - complex64 complex128
 - byte // alias uint8
 - rune // alias int32
+
+---
 
 ## Функции
 
@@ -1007,6 +1100,8 @@ func main() {
   fmt.Println(r, m)
 }
 ```
+
+---
 
 ## Переменные
 
@@ -1078,6 +1173,8 @@ f := 3.142        // float64
 g := 0.867 + 0.5i // complex128
 ```
 
+---
+
 ## Константы
 
 Константы можно объявлять с помощью ключевого слова const:
@@ -1148,6 +1245,8 @@ func main() {
 
 Константы нельзя объявить через :=.
 
+---
+
 ## Приведение типов
 
 В Go почти нет явного приведения типов.
@@ -1168,6 +1267,8 @@ func main() {
   var d int64 = a // error
 ```
 
+---
+
 ### 1. Приведение числовых типов:
 
 Числа можно приводить между собой, но может быть потеря данных:
@@ -1181,6 +1282,8 @@ func main() {
   var f float64 = 3.99
   var a int = int(f) // 3, тк дробная часть просто отбрасывается при приведении float к int
 ```
+
+---
 
 ### 2. Приведение пользовательских типов:
 
@@ -1240,6 +1343,8 @@ func main() {
   u2 := User2(u) // ошибка
 ```
 
+---
+
 ### 3. Type assertion (утверждение типа):
 
 Механзим динамической проверки типа, когда мы говорим "Я утверждаю, что внутри x лежит type"
@@ -1276,6 +1381,8 @@ func main() {
 val, ok := x.(T)
 ```
 
+---
+
 #### type switches
 
 Для проверки типа есть конструкция со switch:
@@ -1310,6 +1417,8 @@ func main() {
 	do(true)
 }
 ```
+
+---
 
 ### 4. Сравнение двух значений:
 
@@ -1381,6 +1490,8 @@ func main() {
   fmt.Println(int64(a) == b) // true
 ```
 
+---
+
 ## Циклы
 
 В Go есть только for циклы.
@@ -1439,6 +1550,8 @@ func main() {
 }
 ```
 
+---
+
 ## Условные конструкции
 
 ### if-else
@@ -1485,6 +1598,8 @@ if resp, err := GetUser(ctx, req); err != nil{
   return nil, fmt.Errorf("error getting user: %w", err)
 }
 ```
+
+---
 
 ### switch - case
 
@@ -1567,6 +1682,8 @@ func main() {
 }
 ```
 
+---
+
 ## Defer
 
 Defer позволяет выполнить какую-то функцию после завершения текущей функции (даже если она завершится с panic).
@@ -1637,6 +1754,8 @@ defer r.Body.Close()
 
 // Как только завершили работу с телом запроса, закрываем поток
 ```
+
+---
 
 ## Замыкания
 
@@ -1714,6 +1833,8 @@ func main() {
 }
 ```
 
+---
+
 ## Указатели
 
 Указатель хранит адрес памяти, в которой хранится значение переменной.
@@ -1770,6 +1891,8 @@ fmt.Println(aptr) // 0x10000c0
 В Go нет адресной арифметики, как в C.
 
 Указатели нужны для изменения значения переменной внутри функции и для избежания копирования.
+
+---
 
 ## Структуры
 
@@ -1892,6 +2015,8 @@ func main() {
 ```
 
 При инициализации будет структура с полями с zero-value.
+
+---
 
 ## Методы структур
 
@@ -2030,6 +2155,8 @@ func main() {
 }
 ```
 
+---
+
 ### Как выбрать ptr или по значению?
 
 ptr: если нам нужно избежать копирования больших структур и нужно менять поля структуры
@@ -2085,6 +2212,8 @@ func (v *Vertex) Abs() float64 {
 }
 ```
 
+---
+
 ## Массивы и слайсы
 
 Массив - это структура данных, содержащая набор элементов одного типа, лежащих подряд в памяти.
@@ -2121,6 +2250,8 @@ func main() {
 }
 ```
 
+---
+
 ### Добавление элементов в слайс
 
 Добавление элементов в слайс выполняется через метод append:
@@ -2142,6 +2273,8 @@ func main() {
 
 Даже если слайс был nil, append под капотом его проинициализирует и добавит элемент.
 
+---
+
 ### Удаление элементов из слайса
 
 Удаление элементов из слайса можно сделать через append+срез:
@@ -2154,6 +2287,8 @@ users = append(users[:n], users[n+1:]...)
 fmt.Println(users)      //["Bob", "Alice", "Kate", "Tom", "Paul", "Mike", "Robert"]
 ```
 
+---
+
 ### Копирование слайса
 
 Копирование слайса можно сделать через
@@ -2163,6 +2298,8 @@ func copy( destination, source [] T) int
 ```
 
 copy копирует минимум длин source, destination. То есть если длина source = 3, длина destination = 5, то копируется только первые 3 элементов destination в source. Если же наоборот, то скопируются три элемента из destination в source, остальные элементы source будут zero-value.
+
+---
 
 ### Сортировка слайса
 
@@ -2196,6 +2333,8 @@ func main() {
 }
 ```
 
+---
+
 ### Сравнение слайсов, пакет reflect
 
 Для сравнения слайсов используется пакет reflect.
@@ -2221,6 +2360,8 @@ func main() {
     fmt.Println("slice1 == slice4:", reflect. DeepEqual(slice1, slice4))    // true
 }
 ```
+
+---
 
 ### Инициализация слайса
 
@@ -2276,6 +2417,8 @@ func main() {
 //[3 5]
 //[5]
 ```
+
+---
 
 <a id=important-slices></a>
 
@@ -2367,6 +2510,8 @@ func main() {
 }
 ```
 
+---
+
 ## Итерирование
 
 Для итерирования в цикле или по мапе (дальше и для каналов) используется range. Результатом выполнения будет два значения при итерации:
@@ -2423,6 +2568,8 @@ for i, _ := range s {
 }
 ```
 
+---
+
 ## Map
 
 Мапа мапит ключи и значения.
@@ -2455,6 +2602,8 @@ m1 := make(map[string]int)
 
 m2 := map[string]int{}
 ```
+
+---
 
 ### Вставка и обновление
 
@@ -2501,6 +2650,8 @@ userForUpdatePtr.Age = 40
 fmt.Println(mm["Vlad"]) // &{40 Vlad}
 ```
 
+---
+
 ### Удаление
 
 Удаление ключа из мапы происходит через delete функцию. Ее можно вызвать даже для nil мапы.
@@ -2522,6 +2673,8 @@ fmt.Println(m) // map[]
 fmt.Println(len(m)) // 0
 ```
 
+---
+
 ### Получение значения по ключу
 
 При получении значения по ключу можно получить флаг ok, который указывает на то, что ключ существует в мапе.
@@ -2536,6 +2689,8 @@ elem, ok := m["Vlad"] // elem=10, ok=true
 
 elem, ok = m["Alex"] // elem=0, ok=false
 ```
+
+---
 
 ### Перебор мапы
 
@@ -2558,6 +2713,8 @@ for key, value := range m {
 // key=Alex, value=20
 // key=Ivan, value=30
 ```
+
+---
 
 ### Важно!!!
 
@@ -2642,9 +2799,13 @@ func main() {
 }
 ```
 
+---
+
 ### Concurrency
 
 Мапы небезопасны для записи, нужно использовать RWMutex, Mutex.
+
+---
 
 ## Интерфейсы
 
@@ -2806,6 +2967,8 @@ func describe(i I) {
 }
 ```
 
+---
+
 ### Empty interface
 
 Интерфейс без единого метода interface{} - empty interface.
@@ -2838,6 +3001,8 @@ func describe(i interface{}) {
 // (42, int)
 // (hello, string)
 ```
+
+---
 
 ### Stringer
 
@@ -2878,11 +3043,15 @@ func main() {
 // Arthur Dent (42 years) Zaphod Beeblebrox (9001 years
 ```
 
+---
+
 ### Еще про интерфейсы
 
 - Интерфесы могут быть как constraint для generic типов (подробнее в разделе про Generics)
 - Интерфейсы можно встраивать друг в друга, тогда тип T реализует интерфейс I1, в который встроили I2, если реализует оба интерфейса.
 - Интерфейсы могут иметь методы, другие интерфейсы, типы (но тогда их можно использовать только как constraint для generic и нельзя передавать в переменных), но не может иметь поля.
+
+---
 
 ## Errors
 
@@ -2984,6 +3153,8 @@ func (s *service) GetUser(ctx context.Context, req *GetUserRequest) (*User, erro
 }
 ```
 
+---
+
 ## Reader
 
 Интерфейс Reader представляет собой чтение до конца потока данных.
@@ -3043,7 +3214,11 @@ func main() {
 // b[:n] = ""
 ```
 
+---
+
 ## Generics и Параметры типа
+
+---
 
 ### Параметры типа в функциях
 
@@ -3173,6 +3348,8 @@ func [T any] Equal(a, b T) bool {
 	return a == b // Ошибка, так как для T any не определено сравнение через == и !=
 }
 ```
+
+---
 
 ### Constraint для generics
 
@@ -3320,6 +3497,8 @@ func main() {
 }
 ```
 
+---
+
 ### Generic структура
 
 Generic может быть структура:
@@ -3412,6 +3591,8 @@ func main() {
 
 Для структур лучше явно писать тип через b := Box[int]{Value: 10}.
 
+---
+
 ### Generic интерфейсы
 
 Можно сделать generic interface:
@@ -3456,6 +3637,8 @@ func ProcessUser(repo Repository[User]) {
 
 Если нужно написать какую-то свою мапу, кеш, ptr или другое, то лучше использовать generic.
 
+---
+
 ### Разница generic и interface
 
 Generic обеспечивает типобезопасный код на этапе компиляции, а any = interface{} хранит значение любого типа при выполнении кода.
@@ -3474,6 +3657,8 @@ func Double[T ~int | ~int64 | ~float64](x T) T {
 	return x * 2 // все гуд
 }
 ```
+
+---
 
 ## Горутины
 
@@ -3522,11 +3707,15 @@ func main() {
 // ...
 ```
 
+---
+
 ### Контекст горутин
 
 Каждая горутина выполняется в своем контексте, независимо от функции main.
 
 То есть даже если мы по порядку запускаем несколько горутин, нельзя предсказать, в каком порядке они завершатся.
+
+---
 
 ### Синтаксис горутин
 
@@ -3575,6 +3764,8 @@ func main() {
 // The End
 ```
 
+---
+
 ### Sleep
 
 Для работы со временем, таймерами, тикерами используется пакет time.
@@ -3614,6 +3805,8 @@ func sum(n int){
 // 5 - 15
 // The End
 ```
+
+---
 
 ### Синхранизация горутин и WaitGroup
 
@@ -3708,6 +3901,8 @@ func main() {
 
 Тут уже у нас не анонимная функция, нам нужно передать указатель на созданный wg.
 
+---
+
 ## Каналы
 
 Каналы (channels) - инструмент коммуникации между горутинами.
@@ -3738,7 +3933,11 @@ var ch2 chan int = make(chan int)
 ch3 := make(chan int, 10) // буферизованный канал с размером 10
 ```
 
-#### Оператор канала <-
+---
+
+<a id=оператор-канала> </a>
+
+### Оператор канала <-
 
 Для передачи данных в канал и для считывания из канала в Go существует оператор `<-`.
 
@@ -3749,6 +3948,8 @@ ch <- 10
 // Считывание данных из канала
 val := <-ch
 ```
+
+---
 
 ### Небуферизованные каналы
 
@@ -3842,6 +4043,8 @@ func main() {
 
 Здесь внутри горутины мы имеем доступ к переменной ch, поэтому можем взаимодействовать с ней без передачи ее через параметр.
 
+---
+
 ### Обмен данных через каналы
 
 Если мы хотим обмениваться данными через каналы, то нужно чтобы одномоментно одна горутина отправляла данные в канал, а другая горутина получала данные из канала. Если мы определим отправление и получение данных через канал в самой функции main, то мы столкнемся с взаимоблокировкой.
@@ -3886,6 +4089,8 @@ func square(ch chan int){
 ```
 
 Тут мы сначала засунули число в канал, с ним что-то сделали, вернули в тот же канал, вычитали и вывели результат.
+
+---
 
 ### Буферизованные каналы
 
@@ -4011,6 +4216,8 @@ func main() {
 }
 ```
 
+---
+
 ### Возвращение канала
 
 Канал может быть возвращаемым значением функции, но нужно аккуратно подходить к записи и чтению.
@@ -4057,6 +4264,8 @@ func createChan(n int) chan int{
 }
 ```
 
+---
+
 ### Закрытие канала
 
 После инициализации канал готов передавать данные и находится в открытом состоянии, пока его не закрыть.
@@ -4085,6 +4294,8 @@ go func() {
 }()
 ```
 
+---
+
 **ВАЖНО!!!**
 
 Только отправитель должен закрывать канал, ни в коем случае не получатель. Запись в закрытый канал вызывает panic.
@@ -4092,6 +4303,8 @@ go func() {
 Каналы не как файлы, их не обязательно закрывать. Закрытие канала необходимо, если получателю точно нужно узнать, что больше не будет значений в канале, например, для завершения `range` цикла.
 
 Читать из закрытого канала можно, вычитается zero-value.
+
+---
 
 ### Двунаправленные и однонаправленные каналы
 
@@ -4145,6 +4358,8 @@ func main() {
 
 Теоретически можно создать однонаправленный канал, но когда мы запишем в него данные, то получить их будет невозможно и мы попадем в deadlock.
 
+---
+
 ### Синхронизация горутин через каналы
 
 Для синхронизации горутин через каналы можно делать:
@@ -4178,6 +4393,8 @@ func square(n int, ch chan struct{}, results map[int]int){
     close(ch)     // закрываем канал после завершения горутины
 }
 ```
+
+---
 
 **ВАЖНО!!!**
 
@@ -4218,6 +4435,8 @@ func main() {
     fmt.Println("The End")
 }
 ```
+
+---
 
 ### Получение значений канала в цикле
 
@@ -4405,6 +4624,8 @@ func main() {
 // [ 500ms] BOOM!
 ```
 
+---
+
 ### Подходы использования каналов:
 
 Каналы не всегда заменяют мьютексы.
@@ -4427,6 +4648,8 @@ Mutex хороши для:
 - защиты счетчика
 - кратких критических секций
 - состояния объекта
+
+---
 
 ## Гонка данных и обнаружение
 
@@ -4500,6 +4723,8 @@ Goroutine 2 changes the value
 
 Использовать детектор гонок рекомендуется только в случае необходимости, так как он потребляет в 10 раз больше памяти и ресурсов процессора.
 
+---
+
 ## Mutex
 
 Примитив синхронизации представленный в пакете sync.
@@ -4562,6 +4787,8 @@ func main() {
 ```
 
 При блокировке мьютекса доступ коду получает горутина, которая его залочила. Остальные ждут, пока она не освободит блокировку.
+
+---
 
 **ВАЖНО!!!**
 
@@ -4639,6 +4866,8 @@ func (s *Store) Data() map[string]int {
 ```
 
 Аналогично со slices и другими типами (в которых под капотом header)
+
+---
 
 ## RWMutex
 
@@ -4757,5 +4986,2608 @@ Lock + Lock  = нельзя, второй писатель ждет
 Пример:
 
 ```go
+package localcache
 
+import "sync"
+
+type LocalCache[T comparable, V any] struct {
+	data map[T]V
+	mu   sync.RWMutex
+}
+
+// Create a new safe map
+//
+// Usage: m := safemap.New[keyType, valueType]()
+func New[T comparable, V any]() *LocalCache[T, V] {
+	return &LocalCache[T, V]{data: make(map[T]V)}
+}
+
+// Set a value in the map
+//
+// Usage: m.Set(key, value)
+func (m *LocalCache[T, V]) Set(key T, value V) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.data == nil {
+		m.data = make(map[T]V)
+	}
+
+	m.data[key] = value
+}
+
+// Get a value from the map by key
+//
+// Usage: val, ok := m.Get(key)
+func (m *LocalCache[T, V]) Get(key T) (V, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	val, ok := m.data[key]
+
+	return val, ok
+}
+
+// Delete a value from the map by key
+//
+// Usage: m.Delete(key)
+func (m *LocalCache[T, V]) Delete(key T) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.data, key)
+}
+
+// Clear the map
+//
+// Usage: m.Clear()
+func (m *LocalCache[T, V]) Clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.data = make(map[T]V)
+}
 ```
+
+---
+
+### Нельзя
+
+**Нельзя даунгрейдить Lock() до RLock() напрямую:**
+
+```go
+mu.Lock()
+// изменили данные
+mu.Unlock()
+
+mu.RLock()
+// читаем
+mu.RUnlock()
+```
+
+Но нужно учитывать, что между mu.Unlock() и mu.RLock() может зайти другая горутина
+
+**Нельзя апгрейдить RLock() до Lock():**
+
+```go
+mu.RLock()
+
+if needWrite {
+	mu.Lock() // deadlock/проблема
+}
+
+mu.RUnlock()
+```
+
+Тут может быть такая проблема, что мы вначале зашли как читатель и залочили RLock(), потом мы говорим, что мы хотим еще и записать.
+
+Но Lock() ждет, пока читатели не выйдут, а так как мы и есть читатели и еще залочили Lock(), то мы попали в Deadlock.
+
+Кароче нужно четко сначала определиться меняются или читаются данные, могут ли они между Lock и Unlock поменяться и т.д.
+
+Правильно было бы так:
+
+```go
+mu.RLock()
+needWrite := checkSomething()
+mu.RUnlock()
+
+if needWrite {
+	mu.Lock()
+	// перед записью лучше перепроверить условие
+	mu.Unlock()
+}
+```
+
+Но тут тоже между mu.RUnlock() и mu.Lock() другая горутина могла зайти и поменять данные.
+
+Еще раз про блокировки:
+
+```bash
+RLock блокирует Lock.
+Lock блокирует RLock.
+Lock блокирует Lock.
+RLock НЕ блокирует другой RLock.
+
+То есть:
+
+читатель не мешает читателю
+читатель мешает писателю
+писатель мешает читателю
+писатель мешает писателю
+```
+
+---
+
+## Обработка ошибок
+
+В Go программы выражают ошибку выполнения с помощью типа `error`.
+
+`error` - встроенный интерфейс.
+
+Для реализации интерфейса `error` требуется реализовать метод `Error() string`.
+
+В стандартной библиотеке Go есть пакет `errors`, который реализует множество функций для работы с ошибками.
+
+Ошибка - просто значение, которое нужно обработать. При получении ошибки программа не завершается (если не кинули panic).
+
+---
+
+<a id=errors.New()></a>
+
+### errors.New()
+
+`errors.New(string)` - возвращает значение конкретного типа, который реалзирует `error` интерфейс, который содержит только текстовое представление ошибки.
+
+Под капотом там структура:
+
+```go
+// errors/errors.go
+package errors
+
+// New returns an error that formats as the given text.
+// Each call to New returns a distinct error value even if the text is identical.
+func New(text string) error {
+	return &errorString{text}
+}
+
+// errorString is a trivial implementation of error.
+type errorString struct {
+	s string
+}
+
+func (e *errorString) Error() string {
+	return e.s
+}
+```
+
+---
+
+### Wrapping
+
+Wrapping - заворачивание ошибки в другую ошибку.
+
+Wrapping нужен для сохранения контекста ошибки и сборки цепочки ошибок.
+
+Для того, чтобы завернуть ошибку чаще всего изпользуют `fmt.Errorf("description: %w", err)`.
+
+`%w` - wrap
+
+**Модели завертывания ошибок**
+
+- цепочка ошибок: последовательное заворачивание ошибок
+
+При использовании последовательного заворачивания, будет создаваться новая ошибка с методом `Unwrap() error`,
+
+по которому errors.Is и errors.As будут ходить по цепочке.
+
+```go
+// Пусть это код data layer
+// db.go
+package db
+
+import (
+  "errors"
+  "database/sql"
+)
+
+var ErrNotFound = errors.New("db: not found")
+
+func (db *DB) GetUser(id int) (User, error) {
+  user, err := db.ExecQuery("SELECT * FROM users WHERE id = ?", id)
+  //...
+  if err != nil {
+    if errors.Is(err, sql.ErrNoRows) {
+      // тут мы через %v ошибку sql.ErrNoRows просто форматируем как строку
+      // заворачиваем через %w ошибку db.ErrNotFound
+      return nil, fmt.Errorf("%w: user not found: %v", ErrNotFound, err)
+    }
+  }
+
+  return user, nil
+}
+
+// Пусть это код service layer
+// service.go
+package service
+
+import (
+  "errors"
+  "db"
+)
+
+var ErrNotFound = errors.New("service: not found")
+
+func (s *Service) GetUser(id int) (User, error) {
+  user, err := db.GetUser(id)
+  if err != nil {
+    if errors.Is(err, db.ErrNotFound) {
+      // Тут мы заворачиваем ошибку service.ErrNotFound и оставляем полученную ошибку как текст
+      return nil, fmt.Errorf("%w: error getting user: %v", ErrNotFound, err)
+    }
+
+    return nil, err
+  }
+
+  return user, nil
+}
+
+// Пусть это код server layer
+// server.go
+package server
+
+import (
+  "errors"
+  "service"
+)
+
+func (h *Handler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+  // тут допустим мы запрос заанмаршалили
+  // req, err := json.NewDecoder(r.Body).Decode(&req)
+  // ...
+
+  resp, err := service.GetUser(req, id)
+  if err != nil {
+    if errors.Is(err, service.ErrNotFound) {
+      // errors.Is пройдется по цепочке ошибок, найдет service.ErrNotFound
+      // и если мы нашли, то проставим нужный статус код
+      http.Error(w, err.Error(), http.StatusNotFound)
+      return
+    }
+
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+}
+```
+
+Тут у нас последовательно заворачиваются ошибки, цепочка будет такая:
+
+```bash
+# Ошибка, дошедшая до сервер слоя:
+service: not found: error getting user: db: not found: sql: no rows in result set
+# Ошибка, дошедшая до сервис слоя:
+db: not found: sql: no rows in result set
+# Ошибка дата слоя
+sql: no rows in result set
+```
+
+Если мы развернем ошибку, то будет так:
+
+```go
+errUwrapped := errors.Unwrap(err) // db: not found: sql: no rows in result set
+errUnwrapped := errors.Unwrap(errUwrapped) // nil, потому что мы sql.ErrNoRows не завернули, а просто форматировали как строку
+```
+
+или более простой пример:
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+	Err3 error = errors.New("error3")
+)
+
+type CustomErr struct {
+	msg string
+}
+
+func (e *CustomErr) Error() string {
+	return e.msg
+}
+
+func main() {
+	err := fmt.Errorf("%w", Err1)
+	err = fmt.Errorf("%w:%v", Err2, err)
+	err = fmt.Errorf("%w:%v", Err3, err)
+	fmt.Printf("%v\n\n", err)
+	fmt.Printf("%v\n", errors.Unwrap(err))
+	fmt.Printf("%v\n", errors.Unwrap(errors.Unwrap(err)))
+}
+// ❯ go run .
+// error3:error2:error1
+
+// error3
+// <nil>
+```
+
+Но тут нужно запомнить, что если мы бы завернули множественно через %w, то Unwrap() уже работал бы с []error.
+
+Тогда у нас первый результать Unwrap() уже был бы nil.
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+	Err3 error = errors.New("error3")
+)
+
+type CustomErr struct {
+	msg string
+}
+
+func (e *CustomErr) Error() string {
+	return e.msg
+}
+
+func main() {
+	err := fmt.Errorf("%w", Err1)
+	err = fmt.Errorf("%w:%w", Err2, err)
+	err = fmt.Errorf("%w:%w", Err3, err)
+	fmt.Printf("%v\n\n", err)
+	fmt.Printf("%v\n", errors.Unwrap(err))
+	fmt.Printf("%v\n", errors.Unwrap(errors.Unwrap(err)))
+}
+// ❯ go run .
+// error3:error2:error1
+
+// <nil>
+// <nil>
+```
+
+- дерево ошибок: получаем при использовании errors.Join().
+
+То есть при использовании errors.Join() мы получаем ошибку с методом `Unwrap() []error`,
+
+который будет содержать все ошибки на одном уровне.
+
+Используется, когда мы хотим, чтобы новая ошибка была собрана из нескольких независимых ошибок.
+
+```go
+// Пример из головы:
+// Допустим мы в мидлваре проверяем доступ пользака к ручке и не находим его
+
+var ErrNotFound = errors.New("not found")
+var ErrUnauthorized = errors.New("unauthorized")
+
+func (m *AuthMiddleware) CheckAccess(ctx context.Context, userID int) error {
+  user, err := m.db.GetUser(userID)
+  if err != nil {
+    if errors.Is(err, sql.ErrNoRows) {
+      return errors.Join(ErrNotFound, ErrUnauthorized)
+    }
+  }
+
+  // код проверок
+  //...
+
+  return nil
+}
+
+
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		if header == "" {
+			s.logger.Error("error getting header", slog.String("error", ErrEmptyAuthHeader.Error()))
+			writeErrorResponse(w, constants.ErrBadRequest, http.StatusUnauthorized, "empty request auth header")
+			return
+		}
+
+		token, ok := strings.CutPrefix(header, "Bearer ")
+		if !ok {
+			s.logger.Error("error getting token string", slog.String("error", ErrInternal.Error()))
+			writeErrorResponse(w, constants.ErrBadRequest, http.StatusUnauthorized, "empty request auth header")
+			return
+		}
+
+		claims, err := s.validateToken(token)
+		if err != nil {
+			s.logger.Error("error validating token", slog.String("error", err.Error()))
+			writeErrorResponse(w, err, http.StatusUnauthorized)
+			return
+		}
+
+    if err := checkUserAccess(ctx, claims.UserID); err != nil {
+      // Вот тут я допустим захочу проверить, что мне вернулось
+      // Допустим я хочу сначала проверить на NotFound, а потом проверить на Unauthorized
+      // Потому что Unauthorized я могу вернуть при любой другой ошибке,
+      // а NotFound я хочу вернуть отдельно
+      // !!! КАРОЧЕ ТЕХНИЧЕСКИ НОРМ, НО ИМЕННО ЭТОТ КЕЙС ВОЗДУШНЫЙ
+      // !!! ПОТОМУ ЧТО ЛУЧШЕ ВЫБИРАТЬ ОДНУ ОСНОВНУЮ, А ОСТАЛЬНЫЕ ДЛЯ ПОНИМАНИЯ КОНТЕКСТА ОШИБКИ
+      if errors.Is(err, ErrNotFound) {
+        writeErrorResponse(w, "user not found", http.StatusNotFound)
+        return
+      }
+
+      s.logger.Error("error checking user access", slog.String("error", err.Error()))
+      writeErrorResponse(w, err, http.StatusUnauthorized)
+      return
+    }
+
+		r.Header.Set("X-User-ID", claims.UserId)
+		r.Header.Set("X-Dormitory-ID", claims.DormitoryId)
+
+		s.logger.Debug("extracted ids from token", slog.String("userId", claims.UserId), slog.String("dormitoryId", claims.DormitoryId))
+
+		next.ServeHTTP(w, r)
+	})
+}
+```
+
+При этом если я итоговую ошибку буду разворачивать, то будет так:
+
+```bash
+# Ошибка, дошедшая до мидлвари:
+not found
+unauthorized
+# Тут дошла имеено ошибка, содержащая внутри []error
+
+# Далее если я сделаю unwrap на ошибке из []error, то получим такой результат:
+<nil>
+```
+
+Если более простой пример:
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+)
+
+type CustomErr struct {
+	msg string
+}
+
+func (e *CustomErr) Error() string {
+	return e.msg
+}
+
+func main() {
+	err := errors.Join(Err1, Err2)
+	fmt.Printf("%v\n\n", err)
+	fmt.Printf("%v\n", errors.Unwrap(err))
+}
+// ❯ go run .
+// error1
+// error2
+//
+// <nil>
+```
+
+---
+
+### Unwrapping
+
+Unwrapping - развертывание ошибки.
+
+Unwrapping нужен чтобы развернуть цепочку ошибок и достать ошибку предыдущего уровня.
+
+`Unwrap()` используется методами errors.Is() и errors.As() для обхода по цепочке или дереву ошибок.
+
+В зависимости от выбранного метода заворачивания:
+
+- Цепочка: `Unwrap() error`
+- Дерево: `Unwrap() []error`
+
+Unwrap() возвращает первую завернутую ошибку предыдущего уровня.
+
+Или если по другому: следующую вложенную ошибку, если у `err` есть метод `Unwrap() error`.
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+	Err3 error = errors.New("error3")
+)
+
+func main() {
+  err := fmt.Errorf("%w", Err1)
+  err = fmt.Errorf("%w:%v", Err2, err)
+
+  fmt.Printf("%v\n\n", err)
+  fmt.Printf("%v\n", errors.Unwrap(err))
+  fmt.Printf("%v\n", errors.Unwrap(errors.Unwrap(err)))
+}
+
+// ❯ go run .
+// error2:error1
+
+// error2
+// <nil>
+```
+
+Тут важно понимать, что Unwrap() смотрит на ошибку уровня ниже, но если мы сделаем что-то типа:
+
+```go
+err := errors.Join(Err1, Err2)
+// или
+err := fmt.Errorf("%w: %w", Err1, Err2)
+```
+
+То `Unwrap()` вернет `<nil>`, так как просто `Unwrap()` не в контесте errors.Is и errors.As умеет работать только с `error`, а не `[]error`.
+
+Вообще отдельно `Unwrap()` не используют обычно, лучше использовать errors.Is и errors.As.
+
+---
+
+<a id=errors.Is()-и-errors.As()></a>
+
+### errors.Is() и errors.As()
+
+errors.Is() и errors.As() позволяют пройтись по цепочке/дереву ошибок (рекурсивно внутрь) и проверить наличие в нем определенной ошибки.
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+type CustomErr struct {
+	msg string
+	source string
+}
+
+func (e *CustomErr) Error() string {
+	return fmt.Sprintf("source=%s msg=%s", e.source, e.msg)
+}
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+	Err3 error = errors.New("error3")
+)
+
+func main() {
+	custErr := &CustomErr{msg: "custom error", source: "app"}
+  err := fmt.Errorf("wrapped custom: %w", custErr)
+	err = errors.Join(fmt.Errorf("wrapped double custom: %w", err), Err1)
+
+	fmt.Printf("%v\n\n", err)
+
+	var custErr2 *CustomErr
+	if errors.As(err, &custErr2) {
+		fmt.Printf("custErr2=%v\n", custErr2)
+	} else {
+		fmt.Printf("not custErr2: %v\n", err)
+	}
+}
+// ❯ go run .
+// wrapped double custom: wrapped custom: source=app msg=custom error
+// error1
+
+// custErr2=source=app msg=custom error
+```
+
+Тут у нас `errors.As` прошелся внутрь на два слоя и нашел ошибку типа `CustomErr`.
+
+На первом шаге он посмотрел на дерево ошибок, так как у нас ошибка `err` после `errors.Join()` такая:
+
+```bash
+err-|
+    |- wrapped double custom: wrapped custom: source=app msg=custom error
+    |           |- wrapped custom: source=app msg=custom error
+    |                   |- source=app msg=custom error
+    |
+    |- error1
+```
+
+Жожем также проверить с errors.Is:
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+type CustomErr struct {
+	msg string
+	source string
+}
+
+func (e *CustomErr) Error() string {
+	return fmt.Sprintf("source=%s msg=%s", e.source, e.msg)
+}
+
+var (
+	Err1 error = errors.New("error1")
+	Err2 error = errors.New("error2")
+	Err3 error = errors.New("error3")
+)
+
+func main() {
+	custErr := &CustomErr{msg: "custom error", source: "app"}
+  err := fmt.Errorf("wrapped custom: %w", custErr)
+	err = errors.Join(fmt.Errorf("wrapped double custom: %w", err), Err1)
+
+	fmt.Printf("%v\n\n", err)
+
+	fmt.Println(errors.Is(err, Err1))
+	fmt.Println(errors.Is(err, custErr))
+	fmt.Println(errors.Is(err, Err2))
+
+	fmt.Println()
+
+	err = fmt.Errorf("%w: %v", Err2, err)
+	fmt.Println(errors.Is(err, Err1))
+	fmt.Println(errors.Is(err, custErr))
+	fmt.Println(errors.Is(err, Err2))
+
+  fmt.Println()
+  fmt.Println(errors.Is(err, &CustomErr{msg: "custom error", source: "app"}))
+
+}
+// ❯ go run .
+// wrapped double custom: wrapped custom: source=app msg=custom error
+// error1
+
+// true
+// true
+// false
+
+// false
+// false
+// true
+
+// false
+```
+
+Тут у нас до момента, пока мы не завернули `err` как текст через `%v`, `errors.Is` нам отдал, что в `err` есть `Err1` и `CustomErr`.
+
+После заворачивания через `%v` и обертывания ошибки в `Err2` через `%w` `errors.Is` нам не отдал, что в `err` есть только `Err2`.
+
+Также у нас `fmt.Println(errors.Is(err, custErr)) //true` потому что мы сравнили с той же ошибкой, которую положили.
+
+Ниже мы сделали `fmt.Println(errors.Is(err, &CustomErr{msg: "custom error", source: "app"})) //false`, потому что это уже другая созданная ошибка, а не тип.
+
+Если подрезюмировать, то `errors.Is` чаще используют для sentinel errors (те, которые мы сами отдельно объявили), а `errors.As` используют для проверки кастомной ошибки или специфичной и присваивания ее в отдельную переменную.
+
+Пример:
+
+```go
+
+func (c *Database) register(
+	ctx context.Context,
+	driver Driver,
+	request *dbtypes.RegisterRequest,
+) (*dbtypes.RegisterResponse, error) {
+	if request == nil {
+		return nil, dberrors.ErrBadRequest
+	}
+
+	var (
+		psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+		usersTable = fmt.Sprintf("%s.%s", constants.SchemaName, constants.UsersTableName)
+	)
+
+	uid := uuid.NewString()
+
+	queryBuilder := psql.Insert(usersTable).
+		Columns(
+			"id", "email", "password", "dormitory_id",
+		).
+		Values(
+			uid, request.Email, request.Password, request.DormitoryId,
+		)
+
+	query, args, err := queryBuilder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("%w: error building register query: %v", dberrors.ErrInternal, err)
+	}
+	_, err = driver.ExecContext(ctx, query, args...)
+	if err != nil {
+		var pgErr *pq.Error // Тут мы хотим проверить, пришла ли ошибка тпиа pq.Error и если что, присвоить ее в pgErr
+		if errors.As(err, &pgErr) && pgErr.Code == dberrors.PGErrUniqueViolation {
+			return nil, fmt.Errorf("%w: error user with same credentials exists: %v", dberrors.ErrConflict, err)
+		}
+
+		return nil, fmt.Errorf("%w: error executing register query: %v", dberrors.ErrInternal, err)
+	}
+
+	return &dbtypes.RegisterResponse{
+		UserId:      uid,
+		DormitoryId: request.DormitoryId,
+	}, nil
+}
+```
+
+---
+
+<a id=panic()-defer-recover()></a>
+
+### panic(), defer, recover()
+
+**`panic()`** - механизм аварийного завершения текущего потока выполнения в горутине.
+
+Он используется для проверки непредвиденных ошибок и похож на exception в других ЯП.
+
+Вызов panic может произойти при двух сценариях:
+
+- мы сами вызвали панику `panic(err)`
+- Runtime вызвал panic из кода программы
+
+Runtime чаще всего может вызвать panic если:
+
+- пишем в nil map/slice (если не через append(), а через s[k ] = v)
+- nil dereference / забыли проинициализировать структуру и пишем в ее поле или читаем ее поле
+- деление на 0 (для целых типов, для float64 паники не будет: 10.0/0.0 = +Inf)
+- выход за предели slice
+
+При срабатывании `panic()` в функции останавливается выполнение этой функции и завершается выполнение программы.
+
+Если в функции, где произошла ошибка, вызываются функции с оператором `defer`, то перед завершением программы выполняются они (именно текущей горутины).
+
+`panic()` принимает один аргумент типа `interface{}`, который может быть любым типом.
+
+Если кратко: `panic()` завершает текущую горутину, возвращает не нулевой exit code (если не было recover) и перед заверешением всех функций выполняет defer этой горутины.
+
+То есть если мы пойдем по стеку вызовов и наверху будет main, то вся программа упадет. Если не main, то упадет горутина, которая вызвала panic.
+
+Порядок выполнения такой:
+
+```bash
+1. текущая функция останавливает обычное выполнение
+2. выполняются ее defer'ы
+3. panic поднимается в вызывающую функцию
+4. там тоже выполняются defer'ы
+5. panic идет выше по стеку
+6. если никто не сделал recover — программа падает
+```
+
+Это называется stack unwinding.
+
+Пример:
+
+```go
+package main
+import "fmt"
+
+func main() {
+    fmt.Println(divide(15, 5))
+    fmt.Println(divide(4, 0))
+    fmt.Println("Program has been finished")
+}
+func divide(x, y float64) float64{
+    if y == 0{
+        panic("Division by zero!")
+    }
+    return x / y
+}
+// ❯ go run .
+// 3
+// panic: Division by zero!
+
+// goroutine 1 [running]:
+// main.divide(...)
+//         /home/vlad/GOshka/Tour/go-tour/main.go:11
+// main.main()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:6 +0x6a
+// exit status 2
+```
+
+Пример с defer:
+
+```go
+package main
+import "fmt"
+
+func mainDefer() {
+	fmt.Println("main defer executed")
+}
+
+func divideDefer(x, y float64) {
+	fmt.Printf("divide defer executed: x=%v y=%v\n", x, y)
+}
+
+func main() {
+	defer mainDefer()
+    fmt.Println(divide(15, 5))
+    fmt.Println(divide(4, 0))
+    fmt.Println("Program has been finished")
+}
+func divide(x, y float64) float64{
+	defer divideDefer(x, y)
+    if y == 0{
+        panic("Division by zero!")
+    }
+    return x / y
+}
+// ❯ go run .
+// divide defer executed: x=15 y=5
+// 3
+// divide defer executed: x=4 y=0
+// main defer executed
+// panic: Division by zero!
+
+// goroutine 1 [running]:
+// main.divide(0x4e57d8?, 0xc000088018?)
+//         /home/vlad/GOshka/Tour/go-tour/main.go:21 +0x8e
+// main.main()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:15 +0x96
+// exit status 2
+```
+
+Еще пример с defer:
+
+```go
+package main
+
+import "fmt"
+
+func a() {
+	defer fmt.Println("defer a")
+	panic("boom")
+}
+
+func b() {
+	defer fmt.Println("defer b")
+	a()
+}
+
+func c() {
+	defer fmt.Println("defer c")
+	b()
+}
+
+func main() {
+	defer fmt.Println("defer main")
+	c()
+}
+// ❯ go run .
+// defer a
+// defer b
+// defer c
+// defer main
+// panic: boom
+
+// goroutine 1 [running]:
+// main.a()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:7 +0x59
+// main.b()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:12 +0x52
+// main.c()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:17 +0x52
+// main.main()
+//         /home/vlad/GOshka/Tour/go-tour/main.go:22 +0x52
+// exit status 2
+```
+
+`panic` используют для:
+
+- невозможных состояний
+- ошибок программиста
+- нарушения инвариантов
+- критической ошибки инициализации
+
+**recover():**
+
+`recover()` - механизм отлавливания panic. То есть recover() останавливает распространение panic, если вызван внутри deferred-функции в той же горутине.
+
+если мы считаем значение recover(), то в ней будет то, что мы положили как аргумент panic.
+
+---
+
+**ВАЖНО!!!**
+
+- recover() должен быть !!!в defer!!! той горутины, в которой мы хотим отлавливать panic. Recover работает только в defer.
+  Если мы сделали recover() в main, а упала другая горутина, то main не отловит эту panic и все равно упадет вся программа.
+- сам recover() ничего не перезапускает, то есть если у меня лег воркер, то recover() должен быть такой:
+
+```go
+func (p *WorkerPool) startWorker(ctx context.Context, workerID int) {
+  defer func() {
+    if r := recover(); r != nil {
+      p.logger.Error("Worker panic recovered - restarting",
+				slog.Int("worker_id", workerID),
+				slog.Any("panic", r))
+
+			time.Sleep(constants.RecoverDelay)
+
+      p.startWorker(ctx, workerID) // но лучше это делать не рекурсивно, иначе накопится стек вызовов
+    }
+  } ()
+
+  for {
+		select {
+		case batch := <-p.batchQueue:
+			p.processBatch(ctx, batch, workerID)
+		case <-p.stopChan:
+			p.logger.Info("Worker stopped", slog.Int("worker_id", workerID))
+
+			return
+
+		case <-ctx.Done():
+			p.logger.Info("Worker context done", slog.Int("worker_id", workerID))
+
+			return
+
+		}
+	}
+}
+```
+
+- recover() не возвращает на строку выполнения после panic(), а просто безопасно выходит из функций по стеку вызовов и возвращает zero-value, если ничего другого не вернули явно после recover().
+- если паника не была отловлена в той же горутине, падает вся программа. То есть unhandled panic => вся программа упала.
+
+```go
+package main
+
+import "fmt"
+func divide(x, y float64) float64{
+	defer func() {
+		if r := recover(); r != nil { // в r будет лежать "Division by zero!"
+			fmt.Println("recovered:", r)
+		}
+	}()
+    if y == 0{
+        panic("Division by zero!")
+				fmt.Println("AFTER PANIC") // недостижимая строка, никогда не выполнится
+    }
+
+    return x / y
+}
+
+func main() {
+  fmt.Println(divide(10, 0))
+	fmt.Println(divide(15, 1))
+  fmt.Println("Program done")
+}
+// ❯ go run .
+// recovered: Division by zero!
+// 0
+// 15
+// Program done
+```
+
+---
+
+## Контекст
+
+`context.Context` - интерфейс:
+
+```go
+type Context interface {
+	Deadline() (deadline time.Time, ok bool)
+	Done() <-chan struct{}
+	Err() error
+	Value(key any) any
+}
+```
+
+- Deadline() - возвращает время, когда контекст должен быть отменен, если он есть.
+- Done() - возвращает канал для остановки, который закрывается когда вызывается cancel() или по истечении timeout и т.д. Обычно используется в select
+- Err() - возвращает ошибку: если Done закрыт, то возвращает non-nil ошибку с описанием причины. Если Done еще ready, вернет nil
+- Value() - возвращает значение контекста по ключу, если его нет, то возвращает nil.
+
+Лучше про сам интерфейс почитать в [документации](https://cs.opensource.google/go/go/+/master:src/context/context.go)
+
+То есть `ctx context.Context` это значение типа, который реализует интерфейс `context.Context`.
+
+Контексты с deadline, timeout, cancel и value создаются от родительского контекста.
+
+Структура взаимосвязи контекстов - дерево:
+
+```bash
+parent ctx
+  ├── child ctx
+  │   ├── grandchild ctx
+  │   └── grandchild ctx
+  └── child ctx
+```
+
+То есть если отменить контекст родителя, то отменятся все контесты дети.
+
+При этом если я создал родительский пустой контекст, затем создал от него контекст ребенок со значением или др. то у родителя не будет этих значений.
+
+Также если отменю ребенка, то родительский контекст не отменится.
+
+`cancel()` закрывает канал ctx.Done().
+
+---
+
+### context.Background
+
+`context.Background() context.Context` - создает пустой контекст без cancel, timeout, deadline и value.
+
+Тут создается пустой контекст без cancel, timeout, deadline и value:
+
+```go
+// context.Background() context.Context
+ctx := context.Background()
+```
+
+**ВАЖНО!!!**
+
+Если в функцию уже пришел контекст, то заменять его нельзя, так как мы потеряем значения из родительского контекста.
+
+```go
+func SomeFunc(ctx context.Context) {
+	ctx = context.Background() // плохо, так как потеряли value, timeout, cancel и т.д.
+
+  res, err := SomeService.DoSomething(ctx) // тут уже пустой контекст
+  // code...
+}
+```
+
+---
+
+### context.TODO
+
+`context.TODO() context.Context` - создает пустой контекст без cancel, timeout, deadline и value.
+
+Похож на context.Background, используется когда еще не понятно, какой контекст нужно использовать.
+
+Лучше в prod коде не использовать.
+
+---
+
+### context.WithValue
+
+`context.WithValue(parent context.Context, key, val any) context.Context` - создать контекст с одним значением типа value:
+
+Тут мы создаем пустой контекст (можно создать от переданного в функцию).
+
+Затем мы от него создаем контест ребенка с значением "value" по ключу CtxKeyUser:
+
+```go
+// context.WithValue(parent context.Context, key, val any) context.Context
+type CtxKey string
+
+const (
+  CtxKeyUser CtxKey = "user"
+)
+
+func main() {
+  ctx := context.Background()
+  ctx = context.WithValue(ctx, CtxKeyUser, "value")
+}
+```
+
+Тут важно, что context.WithValue принимает в качестве ключа и значения тип `any`, поэтому чтобы достать само значение, нужен `type assertion`:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+)
+
+// context.WithValue(parent context.Context, key, val any) context.Context
+type CtxKey string
+
+const (
+	CtxKeyUser CtxKey = "user"
+)
+
+func main() {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, CtxKeyUser, "value")
+
+	if val, ok := ctx.Value(CtxKeyUser).(int); ok {
+		fmt.Printf("value is int: %v %t\n", val, ok) // value true
+	}
+
+	if val, ok := ctx.Value(CtxKeyUser).(string); ok {
+		fmt.Printf("value is string: %v %t\n", val, ok) // value is string: value true
+	}
+}
+// ❯ go run .
+// value is string: value true
+```
+
+Для получения значения используется метод `Value(key any) any`, который возвращает значение типа `any`, если по ключу есть значение и `nil`, если значения по ключу в контексте нет.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+)
+
+// context.WithValue(parent context.Context, key, val any) context.Context
+type CtxKey string
+
+const (
+	CtxKeyUser CtxKey = "user"
+)
+
+func main() {
+	ctxBase := context.Background()
+	ctx := context.WithValue(ctxBase, CtxKeyUser, "value")
+
+	if val, ok := ctx.Value(CtxKeyUser).(int); ok {
+		fmt.Printf("value is int: %v %t\n", val, ok) // value true
+	}
+
+	if val, ok := ctx.Value(CtxKeyUser).(string); ok {
+		fmt.Printf("value is string: %v %t\n", val, ok) // value is string: value true
+	}
+
+	// Проверим наличие в базовом контексте
+	val := ctxBase.Value(CtxKeyUser)
+	fmt.Println("from base ctx:", val)
+}
+// ❯ go run .
+// value is string: value true
+// from base ctx: <nil>
+```
+
+**ВАЖНО!!!**
+
+Для ключей лучше использовать свой тип.
+
+Обычно context.WithValue нужен для передачи по цепочки не чувствительных параметров, но нужных для дальнейшего использования:
+
+- request_id
+- user_id
+- trace_id
+- auth claims
+- etc.
+
+---
+
+### context.WithCancel
+
+`context.WithCancel(parent context.Context) (ctx context.Context, cancel context.CancelFunc)` - создает контекст, который можно вручную отменить через cancel().
+
+Пример:
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+```
+
+`cancel()` закрывает канал ctx.Done().
+
+Пример:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+)
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	cancel()
+
+	select {
+	case <-ctx.Done():
+		fmt.Println(ctx.Err())
+	default:
+		fmt.Println("not canceled")
+	}
+}
+// context canceled
+```
+
+Используют, когда нужно вручную остановить выполнение:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func worker(ctx context.Context) {
+	i := 0
+	for {
+		fmt.Println(i)
+		i++
+		time.Sleep(time.Second)
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go worker(ctx)
+
+	time.Sleep(3 * time.Second)
+	cancel()
+}
+// ❯ go run .
+// 0
+// 1
+// 2
+```
+
+Нужно еще понимать, что если мы условно сделаем select и будем ждать `ctx.Done()` и контекст main горутины отменится, то worker может не успеть словить ctx.Done() и просто тоже отменится:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func worker(ctx context.Context) {
+	i := 0
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("worker done, ctx canceled")
+			return
+		default:
+			fmt.Println(i)
+			i++
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go worker(ctx)
+
+	time.Sleep(3 * time.Second)
+	cancel()
+}
+// ❯ go run .
+// 0
+// 1
+// 2
+```
+
+Чтобы подождать, нужно привычно использовать wg:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+func worker(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	i := 0
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("worker done, ctx canceled")
+			return
+		default:
+			fmt.Println(i)
+			i++
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go worker(ctx, &wg)
+
+	time.Sleep(3 * time.Second)
+	cancel()
+
+	wg.Wait()
+}
+// ❯ go run .
+// 0
+// 1
+// 2
+// worker done, ctx canceled
+```
+
+---
+
+### context.WithTimeout
+
+`context.WithTimeout(parent context.Context, timeout time.Duration) (ctx context.Context, cancel context.CancelFunc)` - создает контекст, который автоматически отменяется через timeout.
+
+Пример:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+defer cancel()
+```
+
+Этот контекст отменится через 2 секунды после создания сам.
+
+После timeout:
+
+```go
+ctx.Err() // context deadline exceeded
+```
+
+Пример:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("tick")
+
+		case <-ctx.Done():
+			fmt.Printf("ctx done: %v\n", ctx.Err())
+			return // это обяз, иначе из for не выйдем
+		}
+	}
+}
+// ❯ go run .
+// tick
+// tick
+// tick
+// ctx done: context deadline exceeded
+```
+
+Если хотим без return, то правильнее вынести в другую функцию (запустить не в горутине):
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func tickTack(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("tick")
+		case <-ctx.Done():
+			fmt.Printf("ctx done: %v\n", ctx.Err())
+			return ctx.Err()
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	err := tickTack(ctx)
+	fmt.Println("main go err: ", err)
+}
+// ❯ go run .
+// tick
+// tick
+// tick
+// ctx done: context deadline exceeded
+// main go err:  context deadline exceeded
+```
+
+---
+
+### context.WithDeadline
+
+`context.WithDeadline(parent context.Context, deadline time.Time) (ctx context.Context, cancel context.CancelFunc)` - создает контекст, который автоматически отменяется в определенный момент времени.
+
+Пример:
+
+```go
+deadline := time.Now().Add(5 * time.Second)
+ctx, cancel := context.WithDeadline(context.Background(), deadline)
+defer cancel()
+```
+
+В принципе работает как с timeout, только отмена в конкретный момент времени.
+
+---
+
+### context.WithCancelCause
+
+`context.WithCancelCause(parent context.Context) (ctx context.Context, cancel context.CancelCauseFunc)` - создает контекст, который можно вручную отменить с конкретной причиной.
+
+Обычный `ctx.Err()` возвращает только стандартные ошибки:
+
+- context.Canceled
+- context.DeadlineExceeded
+
+А `context.Cause(ctx)` позволяет получить конкретную причину отмены:
+
+```go
+ctx, cancel := context.WithCancelCause(context.Background())
+
+cancel(errors.New("user deleted request"))
+
+<-ctx.Done()
+
+fmt.Println(ctx.Err())          // context canceled
+fmt.Println(context.Cause(ctx)) // user deleted request
+```
+
+Используется, когда нужно точно знать, почему контекст отменен.
+
+`context.Cause(ctx)` возвращает то же значение, что и `ctx.Err()`.
+
+---
+
+### context.AfterFunc
+
+`context.AfterFunc(ctx context.Context, f func()) (stop func() bool)` - регистрирует функцию, которая будет вызвана после отмены контекста.
+
+Пример:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func tickTack(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("tick")
+		case <-ctx.Done():
+			fmt.Printf("ctx done: %v\n", ctx.Err())
+			return ctx.Err()
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	stop := context.AfterFunc(ctx, func() {
+		fmt.Println("context canceled, after func executed")
+	})
+	defer stop()
+	defer cancel()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	err := tickTack(ctx)
+	fmt.Println("main go err: ", err)
+}
+// ❯ go run .
+// tick
+// tick
+// tick
+// context canceled, after func executed
+// ctx done: context deadline exceeded
+// main go err:  context deadline exceeded
+```
+
+---
+
+### Context SHPORA
+
+`context.Background()`
+
+- Создать пустой корневой контекст.
+
+`context.TODO()`
+
+- Временный пустой контекст, когда пока непонятно, какой передать.
+
+`context.WithCancel(parent)`
+
+- Создать дочерний контекст с ручной отменой.
+
+`context.WithTimeout(parent, timeout)`
+
+- Создать дочерний контекст с timeout.
+
+`context.WithDeadline(parent, deadline)`
+
+- Создать дочерний контекст с deadline.
+
+`context.WithValue(parent, key, val)`
+
+- Создать дочерний контекст со значением.
+
+`ctx.Done()`
+
+- Канал, который закрывается при отмене контекста.
+
+`ctx.Err()`
+
+- Причина отмены: context.Canceled или context.DeadlineExceeded.
+
+`ctx.Deadline()`
+
+- Получить deadline, если он есть.
+
+`ctx.Value(key)`
+
+- Получить значение по ключу.
+
+`context.WithCancelCause(parent)`
+
+- Создать context с возможностью указать причину отмены.
+
+`context.Cause(ctx)`
+
+- Получить конкретную причину отмены.
+
+**Основные функции:**
+
+```go
+context.Background() context.Context
+context.WithCancel(parent context.Context) (ctx context.Context, cancel context.CancelFunc)
+context.WithDeadline(parent context.Context, deadline time.Time) (ctx context.Context, cancel context.CancelFunc)
+context.WithTimeout(parent context.Context, timeout time.Duration) (ctx context.Context, cancel context.CancelFunc)
+context.WithValue(parent context.Context, key, val any) context.Context
+```
+
+---
+
+## Garbage collector
+
+`GC`- Garbage collector, сборщик мусора.
+
+Он автоматически освобождает память кучи, которую уже не использует программа.
+
+---
+
+### Куча и стэк
+
+Для даунов типа меня, которые это не помнят с курса архитектур вычислительных систем:
+
+Есть условное разделение памяти на секцию кода, кучу и стэк.
+
+В плоской подели памяти это выглядит примерно так:
+
+```bash
+низкие адреса памяти                         высокие адреса памяти
++-------------------+----------------------+--------------------+
+| code/data segment | heap grows ->        | <- stack grows     |
++-------------------+----------------------+--------------------+
+```
+
+Это норм модель, если пытаться понять assembler, но в рамках современных OS и Go лучше воспринимать так:
+
+- stack - отдельная область памяти для выполнения конкретной горутины
+- heap - общая область памяти для объектов, которые могут жить дольше текущего вызова функции
+
+Потому что Go runtime сам управляет кучей и у каждой горутины есть свой маленький growable stack.
+
+Если коротко про основную разницу:
+
+_Stack_
+
+- быстрый
+- принадлежит конкретной goroutine
+- используется для вызовов функций
+- освобождается автоматически при выходе из функции
+- не требует работы GC для освобождения каждого объекта
+
+_Heap_
+
+- общий для программы
+- используется для объектов, которые могут жить дольше функции, точнее, время жизни которых нельзя ограничить текущим stack frame
+- освобождается garbage collector'ом
+- дороже, чем stack
+- создает нагрузку на GC
+
+---
+
+#### Стэк
+
+Стэк нужен для выполнения функций. Когда вызывается функция, создается stack frame - кусок стека для текущего вызова.
+
+В нем могут лежать:
+
+- локальные переменные
+- аргументы функции
+- возвращаемые значения
+- часть временных данных
+- служебная информация для возврата из функции
+
+В Go у каждой горутины свой стек, то есть упрощенно:
+
+```bash
+goroutine 1 -> stack 1
+goroutine 2 -> stack 2
+goroutine 3 -> stack 3
+```
+
+Стек горутины изначально может быть маленький, то он growable и по надобности может расти.
+
+---
+
+#### Куча
+
+Куча нужна для объектов, которые нельзя безопасно хранить только в стэке текущей функции.
+
+Например:
+
+```go
+func NewUser() *User {
+	u := User{Name: "Vlad"}
+	return &u
+}
+```
+
+Тут `u` создан внутри функции, но мы возвращаем указатель на него. Если бы он лежал на стеке, то при выходе из функции он был удален и снаружи по указателю мы бы попали в невалидную память.
+
+Поэтому компилятор понимает, что `u` должен жить дольше, чем вызов функции и кладет `u` в heap.
+
+Тут если точнее, может ли компилятор безопасно разместить объект на стеке? Если нет, то heap.
+
+---
+
+#### escape analysis
+
+В Go решение о размещении объектов на стеке и в heap принимает компилятор через escape analysis.
+
+Escape analysis отвечает на вопрос:
+
+- убегает ли значение за пределы текущей функции?
+
+Если не убегает: можно положить на stack
+
+Если убегает: скорее всего heap
+
+Но тут проблема, что по синтаксису Go нельзя однозначно определить, попадет ли значение на stack или heap.
+
+Единственное, основываясь на чем можно предположить, это по передаче указателей в функцию или создании указателей на объекты внутри функции.
+
+---
+
+### Механизм работы
+
+**Основные задачи GC:**
+
+- автоматически находить объекты в heap, которые больше не достижимы из программы
+- освобождать память, занятую этими объектами
+
+**Что чистит GC:**
+
+В основном чистит heap, потому что стековые данные обычно освобождаются проще: функция завершилась - ее stack frame больше не нужен.
+
+Но при этом GC должен сканировать стеки горутин, потому что на стеках могут лежать ссылки на heap объекты.
+
+**Основной принцип работы GC:**
+
+_Roots_ - это начальные точки, откуда GC начинает искать живые объекты.
+
+К roots относятся:
+
+- стекы горутин
+- глобальные переменные
+- регистры
+- runtime-структуры
+
+GC не понимает, нужен ли объект логически, он может узнать только `достижим ли объект по ссылкам из roots`.
+
+Если достижим, то объект нужен
+
+Если не достижим, то объект - мусор
+
+**STW**
+
+STW - момент, когда Go runtime ненадолго останавливает выполнение всех gouroutine.
+
+Это нужно, чтобы GC безопасно переключил режим работы и завершил фазу.
+
+В Go GC старается делать STW-паузы короткими.
+
+**Алгоритм действий:**
+
+Используется подход: _concurrent tri-color mark-and-sweep_
+
+Mark (маркировка):
+
+Для маркировки используется tri-color marking:
+
+- white - объект еще не обработан, потенциальный мусор
+- gray - объект живой, но его ссылки еще не просмотрены (еще до конца не обработали)
+- black - объект живой, его ссылки уже просмотрены
+
+Алгоритм маркировки такой:
+
+1. В начале все объекты white.
+2. Roots становятся gray.
+3. GC берет gray-объект.
+4. Сканирует его ссылки.
+5. Найденные white-объекты становятся gray.
+6. Сам объект становится black.
+7. Когда gray-объектов больше нет, все оставшиеся white — мусор.
+
+Все это GC выполняет параллельно с работой программы. Но так как полностью без остановок нельзя, есть STW (Stop The World).
+
+Примерный цикл GC упращенно такой:
+
+1. Sweep termination - короткий STW
+2. Mark phase - concurrent marking
+3. Mark termination - короткий STW
+4. Sweep phase - concurrent/background sweeping
+
+**Sweep termination**
+
+Перед новым циклом GC нужно завершить предыдущий sweep. Для этого runtime выполняет короткий STW.
+
+Если упращенно:
+
+- остановить мир
+- убедиться, что предыдущая отчистка завершена
+- включить write barrier
+- начать mark-фазу
+- запустить мир обратно
+
+**Mark phase**
+
+Основная фаза GC.
+
+GC начинает от roots и помечает все достижимые heap-объекты. Эта фаза работает в основном параллельно с работой программы, то есть во время этой фазы программа продолжает менять ссылки, создавать объекты, работать с heap.
+
+Из-за этого нужен специальный механизм - write barrier.
+
+_Write barrier_ - это дополнтельный runtime-механизм при записи ссылок, который помогает GC не потерять объект.
+
+Это нужно так как GC может уже пометить объект, как черный, а затем положить в него ссылку на другой объект, который GC еще не видел. Тогда GC ошибочно может подумать, что другой объект не достижим.
+
+**Mark termination**
+
+Когда mark-фаза закончена, runtime делает еще короткий STW.
+
+На этой фазе:
+
+- останавливает мир
+- доделывает оставшуюся mark-работу
+- отключает write barrier
+- подготавливает sweep
+- запускает мир обратно
+
+После этой фазы GC уже знает, какие объекты живые, а какие мусор.
+
+**Sweep phase**
+
+Sweep освобождает память от объектов, которые не были помечены как живые.
+
+Эта фаза может выполняться concurrently/background.
+
+Упрощенно:
+
+- GC проходит по heap spans
+- освобождает непомеченные объекты
+- возвращает память в allocator
+
+Важный момент, что освободить объект - не всегда значит сразу вернуть память ОС. Часто runtime оставляет память себе (внутреннему аллокатору), чтобы потом быстрее переиспользовать ее под новые объекты.
+
+---
+
+<a id=gc-start></a>
+
+### Запуск GC
+
+GC не запускается каждые N секунд.
+
+Основной триггер к запуску GC - рост кучи.
+
+Это регулируется через `live heap`, `GOGC`, `memory limit`.
+
+`live heap` - это сколько в MB осталось живых объектов.
+
+`GOGC` - это основной параметр частоты GC, по умолчанию `GOGC=100`. Это значит, что следующий GC начнется, когда heap вырастет примерно на 100% от live heap после прошлого GC.
+
+Например, после прошлого GC:
+
+live heap = 100 MB
+
+GOGC = 100
+
+То следующий GC будет, когда heap вырастет примерно до 200 MB
+
+---
+
+### Задать GOGC
+
+Через env:
+
+```bash
+GOGC=50 go run .
+```
+
+Или отключить полностью:
+
+```bash
+GOGC=off go run .
+```
+
+Если хотим в коде, то через пакет `runtime/debug`:
+
+```go
+import "runtime/debug"
+debug.SetGCPercent(50)
+```
+
+`debug.SetGCPercent` меняет процент GC и возвращает предыдущее значение:
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"runtime/debug"
+)
+
+type User struct {
+	Name string
+}
+
+func main() {
+	u := &User{Name: "Vlad"}
+
+	fmt.Printf("%+v\n", u)
+
+	u = nil
+
+	runtime.GC()
+
+	fmt.Println(debug.SetGCPercent(50))
+}
+
+// ❯ go run .
+// &{Name:Vlad}
+// 100
+// ❯ GOGC=off go run .
+// &{Name:Vlad}
+// -1
+```
+
+Если хочется руками в коде запустить GC, то можно использовать `runtime.GC()`.
+
+---
+
+### GOMEMLIMIT
+
+`GOMEMLIMIT` - мягкий memory limit для Go runtime.
+
+Он говорит Go runtime, в рамках какого лимита нужно держать использование памяти.
+
+Пример:
+
+```bash
+GOMEMLIMIT=512MB go run .
+```
+
+Или в коде:
+
+```go
+debug.SetMemoryLimit(512 << 20)
+```
+
+Важный момент, что `GOMEMLIMIT` не жесткий запрет на память, а ограничение на runtime, из-за которого GC может запускаться чаще.
+
+Для того, чтобы посмотреть работу GC можно использовать:
+
+```bash
+GODEBUG=gctrace=1 go run .
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+
+	localcache "github.com/vladlim/go-tour/local_cache"
+)
+
+func main() {
+	localCache := localcache.New[string, int]()
+
+	localCache.Set("Vlad", 10)
+	localCache.Set("Alex", -10)
+
+	var wg sync.WaitGroup
+	wg.Add(10)
+
+	for i := range 10 {
+		go process(i, localCache, &wg)
+	}
+
+	wg.Wait()
+
+	localCache = nil
+
+	fmt.Println("SET PTR NIL")
+
+	runtime.GC()
+
+	lc2 := localcache.New[int, int]()
+	lc2.Set(10, 10)
+	lc2.Set(12, -10)
+
+	runtime.GC()
+}
+// ❯ GODEBUG=gctrace=1 go run .
+// gc 1 @0.048s 0%: 0.016+1.0+0.023 ms clock, 0.033+0.28/0.54/0+0.046 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.058s 2%: 0.044+2.0+0.012 ms clock, 0.089+1.6/0.14/0+0.024 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 3 @0.062s 3%: 0.025+1.5+0.017 ms clock, 0.050+1.3/0.24/0+0.035 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 4 @0.064s 5%: 0.18+4.3+0.005 ms clock, 0.37+2.1/0.49/0+0.010 ms cpu, 3->3->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 5 @0.070s 6%: 0.39+1.5+0.003 ms clock, 0.79+0.74/0.61/0+0.007 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 6 @0.073s 7%: 0.019+1.7+0.020 ms clock, 0.038+0.16/0.89/0.76+0.040 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 7 @0.077s 7%: 0.019+0.85+0.008 ms clock, 0.039+0.44/0.038/0.75+0.017 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 8 @0.078s 7%: 0.016+0.91+0.010 ms clock, 0.033+0.88/0.046/0+0.021 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 9 @0.080s 7%: 0.031+1.7+0.007 ms clock, 0.063+0.39/0.27/0.95+0.015 ms cpu, 3->4->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 10 @0.083s 8%: 0.017+0.82+0.002 ms clock, 0.034+0.41/0.17/0.42+0.004 ms cpu, 4->5->2 MB, 5 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// # github.com/vladlim/go-tour
+// ./main.go:32:20: localCache.New undefined (type *localcache.LocalCache[string, int] has no field or method New)
+// ❯ GODEBUG=gctrace=1 go run .
+// gc 1 @0.041s 0%: 0.051+0.96+0.045 ms clock, 0.10+0.30/0.38/0+0.091 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.047s 2%: 0.047+1.3+0.009 ms clock, 0.095+1.1/0.087/0+0.019 ms cpu, 3->4->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 3 @0.050s 3%: 0.034+2.3+0.005 ms clock, 0.069+0.98/0.050/0+0.011 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 4 @0.053s 4%: 0.12+1.0+0.002 ms clock, 0.24+1.2/0.061/0+0.005 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 5 @0.055s 5%: 0.15+4.0+0.010 ms clock, 0.31+0.56/0.96/0+0.020 ms cpu, 3->4->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 6 @0.063s 5%: 0.045+1.0+0.003 ms clock, 0.091+0.21/0.33/0.69+0.006 ms cpu, 4->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 7 @0.065s 6%: 0.018+2.3+0.017 ms clock, 0.036+0.36/0.85/1.2+0.035 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 8 @0.068s 6%: 0.038+2.8+0.006 ms clock, 0.076+0.40/0.54/0+0.012 ms cpu, 3->5->3 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 9 @0.073s 6%: 0.042+1.1+0.008 ms clock, 0.084+0.41/0.29/0.71+0.016 ms cpu, 5->6->2 MB, 6 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// # github.com/vladlim/go-tour
+// gc 1 @0.002s 4%: 0.014+0.79+0.065 ms clock, 0.028+0.080/0.088/0.54+0.13 ms cpu, 3->4->3 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.006s 3%: 0.012+0.94+0.029 ms clock, 0.025+0.065/0.16/0.70+0.058 ms cpu, 6->7->6 MB, 8 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 3 @0.020s 3%: 0.020+1.2+0.11 ms clock, 0.040+0.28/0.31/0.48+0.22 ms cpu, 11->12->9 MB, 12 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// i=9 key=Alex val=-10
+// i=9 key=Alex val=-11
+// i=0 key=Vlad val=10
+// i=0 key=Vlad val=11
+// i=1 key=Alex val=-11
+// i=1 key=Alex val=-12
+// i=2 key=Vlad val=11
+// i=2 key=Vlad val=12
+// i=3 key=Alex val=-12
+// i=3 key=Alex val=-13
+// i=4 key=Vlad val=12
+// i=4 key=Vlad val=13
+// i=5 key=Alex val=-13
+// i=5 key=Alex val=-14
+// i=6 key=Vlad val=13
+// i=6 key=Vlad val=14
+// i=7 key=Alex val=-14
+// i=7 key=Alex val=-15
+// i=8 key=Vlad val=14
+// i=8 key=Vlad val=15
+// SET PTR NIL
+// gc 1 @0.000s 5%: 0.012+0.11+0.004 ms clock, 0.025+0/0.045/0.076+0.008 ms cpu, 0->0->0 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P (forced)
+// gc 2 @0.000s 14%: 0.15+0.12+0.004 ms clock, 0.30+0/0.070/0.044+0.008 ms cpu, 0->0->0 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P (forced)
+```
+
+Также можно использовать `runtime.MemStats` для получения статичтики по аллоцированию и чистке памяти:
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"time"
+)
+
+func printMem() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	fmt.Printf("Alloc=%d KB TotalAlloc=%d KB NumGC=%d\n",
+		m.Alloc/1024,
+		m.TotalAlloc/1024,
+		m.NumGC,
+	)
+}
+
+func main() {
+	printMem()
+
+	for i := 0; i < 10; i++ {
+		_ = make([]byte, 10*1024*1024)
+		printMem()
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	runtime.GC()
+	printMem()
+}
+// ❯ GODEBUG=gctrace=1 go run .
+// gc 1 @0.046s 1%: 0.12+0.84+0.039 ms clock, 0.25+0.39/0.33/0+0.078 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.053s 1%: 0.020+1.0+0.003 ms clock, 0.040+0.99/0.047/0+0.007 ms cpu, 3->4->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 3 @0.056s 2%: 0.025+1.1+0.003 ms clock, 0.051+0.49/0.50/0.070+0.007 ms cpu, 3->5->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 4 @0.058s 3%: 0.024+1.1+0.001 ms clock, 0.048+1.0/0.078/0+0.003 ms cpu, 4->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 5 @0.060s 4%: 0.11+2.0+0.003 ms clock, 0.22+0.45/1.3/0.046+0.006 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 6 @0.064s 5%: 0.030+1.0+0.009 ms clock, 0.060+0.55/0.081/0.83+0.018 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 7 @0.067s 6%: 0.12+1.3+0.063 ms clock, 0.25+0.68/0.61/0+0.12 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 8 @0.069s 6%: 0.021+0.83+0.032 ms clock, 0.042+0.44/0.081/0.48+0.065 ms cpu, 3->4->1 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 9 @0.071s 7%: 0.013+3.4+0.005 ms clock, 0.027+1.7/0.65/0+0.010 ms cpu, 3->4->2 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 10 @0.076s 7%: 0.022+1.0+0.008 ms clock, 0.045+0.074/0.092/0.74+0.017 ms cpu, 4->4->1 MB, 5 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// # github.com/vladlim/go-tour
+// gc 1 @0.002s 8%: 0.055+1.6+0.008 ms clock, 0.11+0.66/0/0+0.017 ms cpu, 3->5->5 MB, 4 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.007s 9%: 0.018+2.3+0.034 ms clock, 0.037+0.11/0.98/0.95+0.069 ms cpu, 9->9->8 MB, 10 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 3 @0.034s 3%: 0.13+1.4+0.036 ms clock, 0.26+0/0.31/1.0+0.073 ms cpu, 15->15->9 MB, 18 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=52 KB TotalAlloc=52 KB NumGC=0
+// Alloc=10295 KB TotalAlloc=10295 KB NumGC=0
+// gc 1 @0.000s 7%: 0.008+0.16+0.014 ms clock, 0.017+0.045/0.031/0+0.028 ms cpu, 10->10->0 MB, 10 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 2 @0.201s 0%: 0.018+0.33+0.16 ms clock, 0.036+0/0.076/0.066+0.33 ms cpu, 10->10->10 MB, 10 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10291 KB TotalAlloc=20535 KB NumGC=2
+// Alloc=20532 KB TotalAlloc=30776 KB NumGC=2
+// gc 3 @0.406s 0%: 0.13+0.27+0.007 ms clock, 0.26+0.066/0.035/0+0.015 ms cpu, 20->20->0 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// gc 4 @0.607s 0%: 0.12+0.25+0.10 ms clock, 0.25+0/0.13/0+0.20 ms cpu, 10->10->10 MB, 10 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10291 KB TotalAlloc=41016 KB NumGC=4
+// gc 5 @0.808s 0%: 0.024+0.55+0.12 ms clock, 0.049+0/0.10/0.055+0.24 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=51257 KB NumGC=5
+// gc 6 @1.013s 0%: 0.11+0.34+0.030 ms clock, 0.22+0/0.19/0+0.060 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=61497 KB NumGC=6
+// gc 7 @1.214s 0%: 0.018+0.16+0.034 ms clock, 0.036+0/0.081/0.049+0.069 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=71737 KB NumGC=7
+// gc 8 @1.415s 0%: 0.016+0.16+0.028 ms clock, 0.033+0/0.072/0.053+0.057 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=81978 KB NumGC=8
+// gc 9 @1.616s 0%: 0.099+0.30+0.13 ms clock, 0.19+0/0.15/0+0.26 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=92218 KB NumGC=9
+// gc 10 @1.817s 0%: 0.030+0.23+0.030 ms clock, 0.061+0/0.12/0.071+0.061 ms cpu, 20->20->10 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P
+// Alloc=10292 KB TotalAlloc=102459 KB NumGC=10
+// gc 11 @2.019s 0%: 0.024+0.071+0.005 ms clock, 0.048+0/0.060/0.046+0.011 ms cpu, 10->10->0 MB, 20 MB goal, 0 MB stacks, 0 MB globals, 2 P (forced)
+// Alloc=52 KB TotalAlloc=102459 KB NumGC=11
+```
+
+---
+
+### Памятка по GC
+
+**Что лучше помнить:**
+
+- Чем больше heap allocations, тем больше работы для GC (а это может создать нагрузку на CPU)
+- Долгие ссылки = объект не освобождается
+- Большие slices/map могут держать память
+- Много goroutine влекут много стеков для сканирования GC
+- GC не удаляет то, на что еще есть ссылка
+
+**Частые причины давления на GC:**
+
+- частый `fmt.Sprintf()` в горячих циклах (из-за создания новых строк)
+- постоянные `json.Marshal()` и `json.Unmarshal()`
+- создание больших временных slices/maps
+- append без capacity
+- удержание больших underlying arrays маленькими slices
+- кэши
+- глобальные map/slices, которые только растут
+- много указателей в структурах
+
+**Эта часть была взята из гпт, лучше конечно почитать документацию и посмотреть лекции от создателей Go**
+
+---
+
+## Scheduler
+
+`Scheduler` - это часть Go runtime, которая занимается планированием выполнения горутин.
+
+Он решает:
+
+- какая goroutine сейчас будет выполняться
+- на каком OS thread она будет выполняться
+- когда переключиться на другую goroutine
+
+Горутин можно создать намного больше чем OS threads и CPU ядер, значит кто-то должен решать:
+
+- какие выполнять сейчас
+- какие поставить в очередь
+- какие усыпить
+- какие разбудить
+
+Этим занимается Scheduler.
+
+То есть scheduler "раскладывает" много горутин на меньшее количество OS threads.
+
+---
+
+### GMP
+
+Обычно scheduler объясняют через модель GMP (goroutine-machine-processor).
+
+---
+
+#### Goroutine
+
+`G` - goroutine
+
+когда мы пишем `go SomeFunc()`, создается новая горутина, у которой есть:
+
+- свой стек
+- состояние
+- информация о функции
+- ссылка на место выполнения
+- служебная информация runtime
+
+---
+
+#### Machine
+
+`M` - OS thread
+
+То есть настоящий поток операционной системы.
+
+Go runtime просит ОС создать/использует OS threads внутри процесса и выполняет на них горутины.
+
+---
+
+#### Processor
+
+`P` - логический процессор Go runtime
+
+У него есть:
+
+- локальная очередь runnable goroutines
+- часть runtime-ресурсов
+- кэш allocator'а
+- scheduler state
+
+Количество `P` определяется `GOMAXPROCS`.
+
+P.S. Вообще тут как-то непонятно доконца.
+
+`P` - внутренняя сущность Go runtime (это не железо), которая дает OS thread право выполнять Go-код. Это не поток и не ядро, это runtime-слот, без которого M не может выполнять Go-код.
+
+---
+
+#### Связь GMP
+
+Чтобы выполнить Go-код, нужна связка M+P+G
+
+То есть:
+
+- OS thread M берет processor P
+- из очереди P берет goroutine G
+- выполняет G
+
+Почему нельзя просто goroutine -> thread?
+
+Потому что P нужен как промежуточная сущность, которая хранит ресурсы для выполнения Go кода.
+
+Например, если M ушел в blocking syscall, то он может отдать свой P другому M, так остальные goroutine продолжат выполняться.
+
+---
+
+#### GOMAXPROCS
+
+`GOMAXPROCS` - это количество `P`, то есть максимальное количество OS threads, которые одновременно могут выполнять Go-код.
+
+Если установить во время выполнения программы:
+
+```go
+runtime.GOMAXPROCS(4)
+```
+
+Это будет значить, что одновременно Go-код могут выполнять максимум 4 `М`, привязанные к 4 `P`.
+
+Но горутин может быть гораздо больше:
+
+```bash
+goroutine = 10000
+GOMAXPROCS = 4
+```
+
+Тогда одновременно на CPU будут выполняться только примерно 4 горутины, остальные будут ждать своей очереди или будут заблокированы.
+
+Тут есть замечание, что привязка к CPU cores не строгая. ОС сама решает, на каких ядрах выполнять эти OS threads. GOMAXPROCS это про ограничение количества на единовременное выполнение.
+
+---
+
+### Состояния goroutine
+
+Горутина может быть в разных состояниях.
+
+Основные:
+
+- running — сейчас выполняется
+- runnable — готова выполняться, ждет очереди
+- waiting — ждет channel/mutex/timer/network I/O
+- syscall — выполняет системный вызов
+- dead — завершилась
+
+---
+
+Пример `running`:
+
+```go
+go func() {
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
+	}
+} ()
+```
+
+Когда scheduler дал этой горутине CPU, она в состоянии `running`
+
+---
+
+Пример `waiting`:
+
+```go
+ch := make(chan int)
+
+go func() {
+	v := <-ch
+	fmt.Println(v)
+}()
+```
+
+Пока в `ch` ничего нет, горутина ждет.
+
+Она не крутится в цикле и не ест CPU.
+
+В этот момент она в состоянии `waiting`.
+
+Scheduler в это время выполняет другие goroutine.
+
+---
+
+Пример `runnable`, это если горутина готова работать, но сейчас все P заняты другими горутинами.
+
+---
+
+### Очереди Scheduler
+
+У scheduler есть несколько очередей
+
+Основные:
+
+- local run queue у каждого P
+- global run queue
+
+Новые горутины обычно попадают в local run queue текущего P.
+
+---
+
+#### Local run queue
+
+У каждого `P` есть своя локальная очередь runnable goroutines.
+
+Например:
+
+- P1 queue: G1, G2, G3
+- P2 queue: G4, G5
+- P3 queue: G6
+
+Когда `P` ищет работу, он сначала смотрит на свою локальную очередь.
+
+Это ускоряет работу, потому что меньше синхронизации между потоками.
+
+---
+
+#### Global run queue
+
+Есть также глобальная очередь runnable goroutines.
+
+Она нужна для балансировки и некоторых runtime-сценариев.
+
+Scheduler периодически проверяет global queue, чтобы goroutine оттуда не голодали.
+
+---
+
+### Work stealing
+
+Если у одного `P` закончились goroutine, то он может украсть часть работы другого `P`
+
+Например:
+
+- P1 queue: G1, G2, G3, G4, G5, G6
+- P2 queue: empty
+
+`P2` может украсть часть горутин у `P1`
+
+- P1 queue: G1, G2, G3
+- P2 queue: G4, G5, G6
+
+Это нужно, чтобы CPU не простаивали.
+
+---
+
+### Что происходит при `go f()`
+
+Когда мы пишем:
+
+```go
+go f()
+```
+
+Происходит примерно следующее:
+
+1. runtime создает новую goroutine G
+2. выделяет ей начальный стек
+3. записывает, какую функцию надо выполнить
+4. кладет G в очередь runnable goroutines
+5. scheduler позже берет эту G и запускает
+
+То есть не факт, что `f` начнет в этот же момент выполняться.
+
+Это означает, что мы создали горутину и поставили ее на выполнение. А начнется она когда освободится `P` и возьмет ее в работу (не обязательно этот P, может быть work stealing, поэтому корректнее так: когда scheduler выберет эту G для выполнения на каком-то M, связанном с P.)
+
+По этой причине `main` не ждет другие горутины. Он завершается, процесс завершается, все горутины умирают. Scheduler не обязан "довыполнить" все горутины перед завершением программы. Для этого есть `wg`.
+
+---
+
+### Поведение при блокировках
+
+---
+
+#### При блокировке на channel
+
+```go
+func worker(ch <-chan int) {
+	v := <-ch
+	fmt.Println(v)
+}
+```
+
+Если канал пустой:
+
+- G переходит в waiting
+- она привязывается к ожиданию этого channel
+- M с привязанным P освобождаются для выполнения другой runnable G
+
+Когда кто-то отправит значение:
+
+```go
+ch <- 10
+```
+
+runtime разбудит waiting горутину и переведет ее в состояние runnable.
+
+Потом scheduler снова поставит ее на выполнение.
+
+---
+
+<a id=блокировка-при-time.sleep></a>
+
+#### При time.Sleep
+
+```go
+time.Sleep(time.Second)
+```
+
+Горутина не занимают CPU весь период сна.
+
+Она становится waiting на timer.
+
+Когда timer сработает, runtime сделает горутину runnable.
+
+---
+
+#### При mutex
+
+```go
+mu.Lock()
+```
+
+Если mutex свободен — goroutine продолжает работу.
+
+Если mutex занят — goroutine блокируется, становится waiting.
+
+Когда mutex освобождается, одна из ожидающих goroutine становится runnable.
+
+---
+
+#### Network I/O и netpoller
+
+Go хорошо работает с большим числом сетевых соединений из-за netpoller.
+
+Например:
+
+```go
+conn.Read(buf)
+```
+
+Если данных пока нет, goroutine не должна держать OS thread заблокированным.
+
+Runtime регистрирует ожидание в netpoller и паркует goroutine.
+
+Когда socket готов к чтению, netpoller сообщает runtime:
+
+эта goroutine теперь runnable
+
+И scheduler ее запускает.
+
+Упрощенно:
+
+- goroutine ждет network I/O
+- runtime паркует goroutine
+- OS thread свободен для другой работы
+- socket стал ready
+- netpoller будит goroutine
+
+---
+
+#### При syscall
+
+Если горутина делает blocking syscall, то OS thread может реально заблокироваться.
+
+В таком сценарии чтобы другие горутины не стояли, runtime может отцепить `P1` от заблокированного `M1` и дать его другому thread `M2`
+
+Когда syscall закончится, `M1` вернется и попробоует снова получить `P`.
+
+Если свободного `P` нет, горутина станет runnable и будет ждать.
+
+Это важно, так как без такой модели один blocking syscall мог бы заблокировать выполнение других горутин на этом `P`
+
+С моделью G/M/P runtime сохраняет параллелизм.
+
+---
+
+### Preemption
+
+`Preemption` - это принудительное прерывание долго работающей горутины.
+
+Чтобы горутина с тяжелыми вычислениями, которая долго не блокируется и не вызывает функций не могла слишком долго удерживать поток, Go runtime прерывает ее и дает выполняться другим горутинам.
+
+Поэтому основной совет:
+
+Не писать бесконечные CPU loops без условий выхода.
+
+---
+
+### Общая схема и заключение
+
+Очень верхеуровнево, поскольку до конца в голове не смог правильно все уложить.
+
+Есть процессор, у него есть физические ядра (допустим обычно 16 или 8).
+
+Есть системные потоки OS threads, их может быть условно 3000.
+
+Есть планировщик OS, который занимается тем же самым, что планировщик Go, но с системными потоками и ядрами CPU. То есть на каком ядре какой поток сейчас запустить, с какого снять, перекинуть на другое ядро, какой приостановить и т.д.
+
+В один момент времени реально может выполняться столько потоков, сколько ядер CPU (если нет дополнительных механизмов с логическими ядрами, что на одном ядре может выполняться > 1 OS thread в один момент).
+
+Есть планировщик Go, который раскидывает горутины по OS threads.
+
+Есть горутины, которые выполняются на каком-либо OS thread.
+
+То есть слои такие:
+
+```bash
+Go goroutines
+      |
+Go scheduler
+      |
+OS threads
+      |
+OS scheduler
+      |
+CPU cores
+```
+
+В модели GMP:
+
+- G - горутина
+- M - OS thread
+- P - логический процессор Go runtime
+
+Схема такая:
+
+```bash
+Goroutines:
+  G1 G2 G3 G4 G5 ...
+
+Go Scheduler:
+  распределяет G по P/M
+
+OS Threads:
+  M1 M2 M3 M4 ...
+
+OS Scheduler:
+  распределяет M по CPU cores
+
+CPU cores:
+  C1 C2 C3 C4 ...
+```
+
+То есть имеется два уровня планирования:
+
+- OS scheduler планирует OS threads на CPU cores
+- Go scheduler планирует goroutines на OS threads
+
+Чтобы горутина выполнялась, нужен M с привязанным к ней P. То есть нужен OS thread, к которому привязан логический процессор Go runtime, у которого есть:
+
+- local run queue goroutine
+- runtime resources
+- часть allocator/cache
+- scheduler state
+
+Scheduler отчасти связан с работой GC, поскольку GC использует механизмы runtime/scheduler чтобы:
+
+- останавливать goroutine на safepoints
+- запускать GC worker goroutines
+- координировать STW-паузы
+- сканировать стеки goroutine
+
+Scheduler/runtime знает о блокировках, которые происходят через механизмы Go/runtime:
+
+- channel
+- select
+- time.Sleep / timers
+- mutex
+- network I/O через netpoller
+- syscall
+- GC safepoints
+
+При получении сигналов о блокировках/разблокировках, сне и т.д. scheduler кладет их в очередь. Потом любой M с P может взять ее на выполнение.
+
+Вообще тема достаточно сложная, поэтому представлять все это в жесткой схеме "ядро->поток->P->горутина" не нужно, так как в реальности это динамическая система очередей и привязок.
+
+---
+
+## Строки
+
+## IO
