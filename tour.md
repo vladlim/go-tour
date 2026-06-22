@@ -10,15 +10,15 @@
 
 ## Оглавление
 
-- [Программы и пакеты](#программы-и-пакеты)
-  - [Импорт пакетов](#импорт-пакетов)
+- [Программы и пакеты](#programmy-i-pakety)
+  - [Импорт пакетов](#import-paketov)
   - [GOROOT](#goroot)
   - [GOPATH](#gopath)
-  - [Пакеты, поиск](#пакеты-поиск)
+  - [Пакеты, поиск](#pakety-poisk)
   - [vendor](#vendor)
-  - [Режимы сборки](#режимы-сборки)
+  - [Режимы сборки](#rezhimy-sborki)
 - [GO ENV](#go-env)
-- [Основные команды go](#основные-команды-go)
+- [Основные команды go](#osnovnye-komandy-go)
   - [go run](#go-run)
   - [go build](#go-build)
   - [go install](#go-install)
@@ -27,7 +27,7 @@
   - [go mod tidy](#go-mod-tidy)
   - [go get](#go-get)
   - [go mod vendor](#go-mod-vendor)
-  - [go env](#go-env-1)
+  - [go env](#go-env-2)
   - [go fmt](#go-fmt)
   - [gofmt](#gofmt)
   - [go vet](#go-vet)
@@ -39,133 +39,135 @@
   - [go generate](#go-generate)
   - [go tool](#go-tool)
   - [ШПОРА](#shpora)
-- [Типы данных](#типы-данных)
-- [Функции](#функции)
-- [Переменные](#переменные)
-- [Константы](#константы)
-- [Приведение типов](#приведение-типов)
-- [Циклы](#циклы)
-- [Условные конструкции](#условные-конструкции)
+- [Типы данных](#tipy-dannyh)
+- [Функции](#funktsii)
+- [Переменные](#peremennye)
+- [Константы](#konstanty)
+- [Приведение типов](#privedenie-tipov)
+- [Циклы](#tsikly)
+- [Условные конструкции](#uslovnye-konstruktsii)
 - [Defer](#defer)
-- [Замыкания](#замыкания)
-- [Указатели](#указатели)
-- [Структуры](#структуры)
-- [Методы структур](#методы-структур)
-  - [Как выбрать ptr или по значению?](#как-выбрать-ptr-или-по-значению)
-- [Массивы и слайсы](#массивы-и-слайсы)
-  - [Добавление элементов в слайс](#добавление-элементов-в-слайс)
-  - [Удаление элементов из слайса](#удаление-элементов-из-слайса)
-  - [Копирование слайса](#копирование-слайса)
-  - [Сортировка слайса](#сортировка-слайса)
-  - [Сравнение слайсов, пакет reflect](#сравнение-слайсов-пакет-reflect)
-  - [Инициализация слайса](#инициализация-слайса)
-  - [!!! ОЧЕНЬ ВАЖНО !!!](#important-slices)
-- [Итерирование](#итерирование)
+- [Замыкания](#zamykaniya)
+- [Указатели](#ukazateli)
+- [Структуры](#struktury)
+- [Методы структур](#metody-struktur)
+  - [Как выбрать ptr или по значению?](#kak-vybrat-ptr-ili-po-znacheniyu)
+- [Массивы и слайсы](#massivy-i-slaysy)
+  - [Добавление элементов в слайс](#dobavlenie-elementov-v-slays)
+  - [Удаление элементов из слайса](#udalenie-elementov-iz-slaysa)
+  - [Копирование слайса](#kopirovanie-slaysa)
+  - [Сортировка слайса](#sortirovka-slaysa)
+  - [Сравнение слайсов, пакет reflect](#sravnenie-slaysov-paket-reflect)
+  - [Инициализация слайса](#initsializatsiya-slaysa)
+  - [!!! ОЧЕНЬ ВАЖНО !!!](#ochen-vazhno)
+- [Итерирование](#iterirovanie)
 - [Map](#map)
-  - [Вставка и обновление](#вставка-и-обновление)
-  - [Получение значения по ключу](#получение-значения-по-ключу)
-  - [Перебор мапы](#перебор-мапы)
-  - [Важно!!!](#важно)
+  - [Вставка и обновление](#vstavka-i-obnovlenie)
+  - [Получение значения по ключу](#poluchenie-znacheniya-po-klyuchu)
+  - [Перебор мапы](#perebor-mapy)
+  - [Важно!!!](#vazhno)
   - [Concurrency](#concurrency)
-- [Интерфейсы](#интерфейсы)
+- [Интерфейсы](#interfeysy)
   - [Empty interface](#empty-interface)
   - [Stringer](#stringer)
-  - [Еще про интерфейсы](#еще-про-интерфейсы)
+  - [Еще про интерфейсы](#esche-pro-interfeysy)
 - [Errors](#errors)
 - [Reader](#reader)
-- [Generics и Параметры типа](#generics-и-параметры-типа)
-  - [Параметры типа в функции](#параметры-типа-в-функции)
-  - [Constraint для generics](#constraint-для-generics)
-  - [Generic структура](#generic-структура)
-  - [Generic интерфейсы](#generic-интерфейсы)
-  - [Разница generic и interface](#разница-generic-и-interface)
-- [Горутины](#горутины)
-  - [Контекст горутин](#контекст-горутин)
-  - [Синтаксис горутин](#синтаксис-горутин)
+- [Generics и Параметры типа](#generics-i-parametry-tipa)
+  - [Параметры типа в функции](#parametry-tipa-v-funktsii)
+  - [Constraint для generics](#constraint-dlya-generics)
+  - [Generic структура](#generic-struktura)
+  - [Generic интерфейсы](#generic-interfeysy)
+  - [Разница generic и interface](#raznitsa-generic-i-interface)
+- [Горутины](#gorutiny)
+  - [Контекст горутин](#kontekst-gorutin)
+  - [Синтаксис горутин](#sintaksis-gorutin)
   - [Sleep](#sleep)
-  - [Синхронизация горутин и WaitGroup](#синхранизация-горутин-и-waitgroup)
-- [Каналы](#каналы)
-  - [Оператор канала <-](#оператор-канала)
-  - [Небуферизованные каналы](#небуферизованные-каналы)
-  - [Обмен данных через каналы](#обмен-данных-через-каналы)
-  - [Буферизованные каналы](#буферизованные-каналы)
-  - [Возвращение канала](#возвращение-канала)
-  - [Закрытие канала](#закрытие-канала)
-  - [Двунаправленные и однонаправленные каналы](#двунаправленные-и-однонаправленные-каналы)
-  - [Синхронизация горутин через каналы](#синхронизация-горутин-через-каналы)
-  - [Получение значений канала в цикле](#получение-значений-канала-в-цикле)
-  - [Подходы использования каналов](#подходы-использования-каналов)
-- [Гонка данных и обнаружение](#гонка-данных-и-обнаружение)
+  - [Синхронизация горутин и WaitGroup](#sinhronizatsiya-gorutin-i-waitgroup)
+- [Каналы](#kanaly)
+  - [Оператор канала <-](#operator-kanala)
+  - [Небуферизованные каналы](#nebuferizovannye-kanaly)
+  - [Обмен данных через каналы](#obmen-dannyh-cherez-kanaly)
+  - [Буферизованные каналы](#buferizovannye-kanaly)
+  - [Возвращение канала](#vozvraschenie-kanala)
+  - [Закрытие канала](#zakrytie-kanala)
+  - [Двунаправленные и однонаправленные каналы](#dvunapravlennye-i-odnonapravlennye-kanaly)
+  - [Синхронизация горутин через каналы](#sinhronizatsiya-gorutin-cherez-kanaly)
+  - [Получение значений канала в цикле](#poluchenie-znacheniy-kanala-v-tsikle)
+  - [Подходы использования каналов](#podhody-ispolzovaniya-kanalov)
+- [Гонка данных и обнаружение](#gonka-dannyh-i-obnaruzhenie)
 - [Mutex](#mutex)
 - [RWMutex](#rwmutex)
-- [Обработка ошибок](#обработка-ошибок)
-  - [errors.New()](<#errors.New()>)
+- [Обработка ошибок](#obrabotka-oshibok)
+  - [errors.New()](#errors-new)
   - [Wrapping](#wrapping)
   - [Unwrapping](#unwrapping)
-  - [errors.Is() и errors.As()](<#errors.Is()-и-errors.As()>)
-  - [panic(), defer, recover()](<#panic()-defer-recover()>)
-- [Контекст](#контекст)
-  - [context.Background](#contextbackground)
-  - [context.TODO](#contexttodo)
-  - [context.WithCancel](#contextwithcancel)
-  - [context.WithTimeout](#contextwithtimeout)
-  - [context.WithDeadline](#contextwithdeadline)
-  - [context.WithValue](#contextwithvalue)
-  - [context.Done](#contextdone)
-  - [context.Err](#contexterr)
-  - [context.Deadline](#contextdeadline)
-  - [context.Value](#contextvalue)
-  - [context.WithCancelCause](#contextwithcancelcause)
-  - [context.Cause](#contextcause)
-  - [context.AfterFunc](#contextafterfunc)
+  - [errors.Is() и errors.As()](#errors-is-i-errors-as)
+  - [panic(), defer, recover()](#panic-defer-recover)
+- [Контекст](#kontekst)
+  - [context.Background](#context-background)
+  - [context.TODO](#context-todo)
+  - [context.WithCancel](#context-withcancel)
+  - [context.WithTimeout](#context-withtimeout)
+  - [context.WithDeadline](#context-withdeadline)
+  - [context.WithValue](#context-withvalue)
+  - [context.Done](#context-done)
+  - [context.Err](#context-err)
+  - [context.Deadline](#context-deadline)
+  - [context.Value](#context-value)
+  - [context.WithCancelCause](#context-withcancelcause)
+  - [context.Cause](#context-cause)
+  - [context.AfterFunc](#context-afterfunc)
   - [Context SHPORA](#context-shpora)
 - [Garbage collector](#garbage-collector)
-  - [Куча и стэк](#куча-и-стэк)
-    - [Стэк](#стэк)
-    - [Куча](#куча)
+  - [Куча и стэк](#kucha-i-stek)
+    - [Стэк](#stek)
+    - [Куча](#kucha)
     - [escape analysis](#escape-analysis)
-  - [Механизм работы](#механизм-работы)
-  - [Запуск GC](#gc-start)
-  - [Задать GOGC](#задать-gogc)
+  - [Механизм работы](#mehanizm-raboty)
+  - [Запуск GC](#zapusk-gc)
+  - [Задать GOGC](#zadat-gogc)
   - [GOMEMLIMIT](#gomemlimit)
-  - [Памятка по GC](#памятка-по-gc)
+  - [Памятка по GC](#pamyatka-po-gc)
 - [Scheduler](#scheduler)
   - [GMP](#gmp)
     - [Goroutine](#goroutine)
     - [Machine](#machine)
     - [Processor](#processor)
-    - [Связь GMP](#связь-gmp)
+    - [Связь GMP](#svyaz-gmp)
     - [GOMAXPROCS](#gomaxprocs)
-  - [Состояния goroutine](#состояния-goroutine)
-  - [Очереди Scheduler](#очереди-scheduler)
+  - [Состояния goroutine](#sostoyaniya-goroutine)
+  - [Очереди Scheduler](#ocheredi-scheduler)
     - [Local run queue](#local-run-queue)
     - [Global run queue](#global-run-queue)
     - [Work stealing](#work-stealing)
-  - [Что происходит при go f()](#что-происходит-при-go-f)
-  - [Поведение при блокировках](#поведение-при-блокировках)
-    - [При блокировке на channel](#при-блокировке-на-channel)
-    - [При time.Sleep](#блокировка-при-time.sleep)
-    - [При mutex](#при-mutex)
-    - [Network I/O и netpoller](#network-io-и-netpoller)
-    - [При syscall](#при-syscall)
+  - [Что происходит при go f()](#chto-proishodit-pri-go-f)
+  - [Поведение при блокировках](#povedenie-pri-blokirovkah)
+    - [При блокировке на channel](#pri-blokirovke-na-channel)
+    - [При time.Sleep](#pri-time-sleep)
+    - [При mutex](#pri-mutex)
+    - [Network I/O и netpoller](#network-i-o-i-netpoller)
+    - [При syscall](#pri-syscall)
   - [Preemption](#preemption)
-  - [Общая схема и заключение](#общая-схема-и-заключение)
-- [Строки](#строки)
-  - [Длина строки](#длина-строки)
-  - [Индексация строки](#индексация-строки)
+  - [Общая схема и заключение](#obschaya-shema-i-zaklyuchenie)
+- [Строки](#stroki)
+  - [Длина строки](#dlina-stroki)
+  - [Индексация строки](#indeksatsiya-stroki)
   - [Rune](#rune)
-  - [Range по строке](#range-по-строке)
-  - [Изменение строк](#изменение-строк)
-  - [Срез строки](#срез-строки)
-  - [Строковые литералы](#строковые-литералы)
+  - [Range по строке](#range-po-stroke)
+  - [Изменение строк](#izmenenie-strok)
+  - [Срез строки](#srez-stroki)
+  - [Строковые литералы](#strokovye-literaly)
     - [Interpreted string literal](#interpreted-string-literal)
     - [Raw string literal](#raw-string-literal)
-  - [Сравнение строк](#сравнение-строк)
-  - [Пакет strings](#пакет-strings)
-  - [Самые частые функции](#самые-частые-функции)
+  - [Сравнение строк](#sravnenie-strok)
+  - [Пакет strings](#paket-strings)
+  - [Самые частые функции](#samye-chastye-funktsii)
   - [String Builder](#string-builder)
 
 ---
+
+<a id="programmy-i-pakety"></a>
 
 ## Программы и пакеты
 
@@ -191,6 +193,8 @@
 - библиотеки/reusable
 
 ---
+
+<a id="import-paketov"></a>
 
 ### Импорт пакетов
 
@@ -272,6 +276,8 @@ func main() {
 
 ---
 
+<a id="goroot"></a>
+
 ### GOROOT
 
 GOROOT - папка с установленным Go SDK.
@@ -333,6 +339,8 @@ go env GOROOT
 
 ---
 
+<a id="gopath"></a>
+
 ### GOPATH
 
 GOPATH - рабочая область/кеш установленных внешних пакетов Go: модули, бинарники.
@@ -360,6 +368,8 @@ GOPATH/
 ```
 
 ---
+
+<a id="pakety-poisk"></a>
 
 ### Пакеты, поиск
 
@@ -528,6 +538,8 @@ import "github.com/google/uuid"
 
 ---
 
+<a id="vendor"></a>
+
 ### vendor
 
 vendor - это папка внутри проекта, куда можно положить копии зависимостей.
@@ -584,6 +596,8 @@ vendor используют если хотим:
 
 ---
 
+<a id="rezhimy-sborki"></a>
+
 ### Режимы сборки
 
 Есть два основных режима сборки проекта:
@@ -603,6 +617,8 @@ go build -mod-=vendor
 В зависимости от режима Go будет искать внешние зависимости в кеше или вендоре.
 
 ---
+
+<a id="go-env"></a>
 
 ## GO ENV
 
@@ -690,9 +706,11 @@ go clean -modcache # Чистка кеша модулей
 
 ---
 
+<a id="osnovnye-komandy-go"></a>
+
 ## Основные команды go
 
-<a id=go-run></a>
+<a id="go-run"></a>
 
 1. `go run`
 
@@ -778,7 +796,7 @@ func main() {
 // flag.Args:  [1 2 3]
 ```
 
-<a id=go-build></a> 2. `go build`
+<a id="go-build"></a> 2. `go build`
 
 ```bash
 go build
@@ -791,7 +809,7 @@ go build -o имя_бинарника main.go # собрать main.go и сох
 
 Компилирует указанные пакеты вместе с зависимостями и сохраняет бинарник.
 
-<a id=go-install></a> 3. `go install`
+<a id="go-install"></a> 3. `go install`
 
 ```bash
 go install github.com/swaggo/swag/cmd/swag@latest
@@ -808,7 +826,7 @@ go build   — кладет бинарник обычно в текущую ди
 go install — кладет бинарник в GOBIN/GOPATH/bin
 ```
 
-<a id=go-test></a> 4. `go test`
+<a id="go-test"></a> 4. `go test`
 
 ```bash
 go test ./... # запуск всех тестов
@@ -828,7 +846,7 @@ func TextXxx(t *testing.T)
 
 Работает вместе с пакетом testing, который поддерживает автоматическое тестирование пакетов.
 
-<a id=go-mod-init></a> 5. `go mod init`
+<a id="go-mod-init"></a> 5. `go mod init`
 
 ```bash
 go mod init example.com/myapp
@@ -845,7 +863,7 @@ require example.com/utils v1.x.x
 #...
 ```
 
-<a id=go-mod-tidy></a> 6. `go mod tidy`
+<a id="go-mod-tidy"></a> 6. `go mod tidy`
 
 ```bash
 go mod tidy
@@ -857,7 +875,7 @@ go mod tidy
 - удаляет неиспользуемые зависимости
 - обновляет/создает go.sum
 
-<a id=go-get></a> 7. `go get`
+<a id="go-get"></a> 7. `go get`
 
 ```bash
 go get github.com/google/uuid
@@ -872,7 +890,7 @@ go get github.com/google/uuid@latest # обновить зависимость �
 go get github.com/google/uuid@1.5.0. # откатить до версии 1.5.0
 ```
 
-<a id=go-mod-vendor></a> 8. `go mod vendor`
+<a id="go-mod-vendor"></a> 8. `go mod vendor`
 
 ```bash
 go mod vendor
@@ -880,7 +898,7 @@ go mod vendor
 
 Создает папку vendor/ и складывает туда зависимости, нужные проекту.
 
-<a id=go-env-1></a> 9. `go env`
+<a id="go-env-2"></a> 9. `go env`
 
 Разбирал выше. Показывает/изменяет настройки, с которыми запускается/собирается проект.
 
@@ -892,7 +910,7 @@ go env -w GOPRIVATE=github.com/company/* # записать настройку
 go env -u GOPRIVATE # сбросить настройку
 ```
 
-<a id=go-fmt></a> 10. `go fmt`
+<a id="go-fmt"></a> 10. `go fmt`
 
 ```bash
 go fmt ./... # форматирует Go-код
@@ -900,7 +918,7 @@ go fmt ./... # форматирует Go-код
 
 Обертка над gofmt.
 
-<a id=gofmt></a> 11. `gofmt`
+<a id="gofmt"></a> 11. `gofmt`
 
 ```bash
 gofmt -w .
@@ -918,7 +936,7 @@ gofmt - по файлам/директориям
 
 `-w` - записать изменения в файлы. Без `-w` разультат выводится в stdout.
 
-<a id=go-vet></a> 12. `go vet`
+<a id="go-vet"></a> 12. `go vet`
 
 ```bash
 go vet ./...
@@ -946,7 +964,7 @@ func main() {
 
 Не линтер, но для базовых проверок норм.
 
-<a id=go-clean></a> 13. `go clean`
+<a id="go-clean"></a> 13. `go clean`
 
 ```bash
 go clean
@@ -960,7 +978,7 @@ go clean -testcache # чистить закешированные test cache
 go clean -modcache # чистить закешированные модульные cache: GOMODCACHE
 ```
 
-<a id=go-list></a> 14. `go list`
+<a id="go-list"></a> 14. `go list`
 
 ```bash
 go list
@@ -970,7 +988,7 @@ go list -m # показать текущий модуль
 go list -f '{{.Dir}}' . # показать путь к директории пакета
 ```
 
-<a id=go-doc></a> 15. `go doc`
+<a id="go-doc"></a> 15. `go doc`
 
 ```bash
 go doc fmt.Println
@@ -988,7 +1006,7 @@ func Printf(format string, a ...any) (n int, err error)
     encountered.
 ```
 
-<a id=go-version></a> 16. `go version`
+<a id="go-version"></a> 16. `go version`
 
 ```bash
 go version
@@ -996,7 +1014,7 @@ go version
 
 Показывает версию Go
 
-<a id=go-work></a> 17. `go work`
+<a id="go-work"></a> 17. `go work`
 
 ```bash
 go work init ./service-a ./service-b # создать workspace
@@ -1008,7 +1026,7 @@ go work sync # синхронизировать
 
 Используется для workspace из нескольких модулей, когда хочется разрабатывать их вместе локально.
 
-<a id=go-generate></a> 18. `go generate`
+<a id="go-generate"></a> 18. `go generate`
 
 ```bash
 go generate ./... # пройтись и везде поискать че погенерить и сгенерить
@@ -1026,7 +1044,7 @@ go generate ./... # пройтись и везде поискать че пог�
 
 Можно еще писать gen файлы, например, с помощью html/template, text/template и выполнять кодогенерацию `через go generate`
 
-<a id=go-tool></a> 19. `go tool`
+<a id="go-tool"></a> 19. `go tool`
 
 ```bash
 go tool имя_инструмента
@@ -1039,7 +1057,7 @@ go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
 ```
 
-<a id=shpora></a> 20. ШПОРА:
+<a id="shpora"></a> 20. ШПОРА:
 
 ```bash
 go run .              — собрать во временный файл и сразу запустить
@@ -1068,6 +1086,8 @@ go work ...           — работа с multi-module workspace
 
 ---
 
+<a id="tipy-dannyh"></a>
+
 ## Типы данных
 
 Основные встроенные типы:
@@ -1082,6 +1102,8 @@ go work ...           — работа с multi-module workspace
 - rune // alias int32
 
 ---
+
+<a id="funktsii"></a>
 
 ## Функции
 
@@ -1115,6 +1137,8 @@ func main() {
 ```
 
 ---
+
+<a id="peremennye"></a>
 
 ## Переменные
 
@@ -1188,6 +1212,8 @@ g := 0.867 + 0.5i // complex128
 
 ---
 
+<a id="konstanty"></a>
+
 ## Константы
 
 Константы можно объявлять с помощью ключевого слова const:
@@ -1260,6 +1286,8 @@ func main() {
 
 ---
 
+<a id="privedenie-tipov"></a>
+
 ## Приведение типов
 
 В Go почти нет явного приведения типов.
@@ -1282,6 +1310,8 @@ func main() {
 
 ---
 
+<a id="1-privedenie-chislovyh-tipov"></a>
+
 ### 1. Приведение числовых типов:
 
 Числа можно приводить между собой, но может быть потеря данных:
@@ -1297,6 +1327,8 @@ func main() {
 ```
 
 ---
+
+<a id="2-privedenie-polzovatelskih-tipov"></a>
 
 ### 2. Приведение пользовательских типов:
 
@@ -1358,6 +1390,8 @@ func main() {
 
 ---
 
+<a id="3-type-assertion-utverzhdenie-tipa"></a>
+
 ### 3. Type assertion (утверждение типа):
 
 Механзим динамической проверки типа, когда мы говорим "Я утверждаю, что внутри x лежит type"
@@ -1396,6 +1430,8 @@ val, ok := x.(T)
 
 ---
 
+<a id="type-switches"></a>
+
 #### type switches
 
 Для проверки типа есть конструкция со switch:
@@ -1432,6 +1468,8 @@ func main() {
 ```
 
 ---
+
+<a id="4-sravnenie-dvuh-znacheniy"></a>
 
 ### 4. Сравнение двух значений:
 
@@ -1505,6 +1543,8 @@ func main() {
 
 ---
 
+<a id="tsikly"></a>
+
 ## Циклы
 
 В Go есть только for циклы.
@@ -1565,7 +1605,11 @@ func main() {
 
 ---
 
+<a id="uslovnye-konstruktsii"></a>
+
 ## Условные конструкции
+
+<a id="if-else"></a>
 
 ### if-else
 
@@ -1613,6 +1657,8 @@ if resp, err := GetUser(ctx, req); err != nil{
 ```
 
 ---
+
+<a id="switch-case"></a>
 
 ### switch - case
 
@@ -1697,6 +1743,8 @@ func main() {
 
 ---
 
+<a id="defer"></a>
+
 ## Defer
 
 Defer позволяет выполнить какую-то функцию после завершения текущей функции (даже если она завершится с panic).
@@ -1769,6 +1817,8 @@ defer r.Body.Close()
 ```
 
 ---
+
+<a id="zamykaniya"></a>
 
 ## Замыкания
 
@@ -1848,6 +1898,8 @@ func main() {
 
 ---
 
+<a id="ukazateli"></a>
+
 ## Указатели
 
 Указатель хранит адрес памяти, в которой хранится значение переменной.
@@ -1906,6 +1958,8 @@ fmt.Println(aptr) // 0x10000c0
 Указатели нужны для изменения значения переменной внутри функции и для избежания копирования.
 
 ---
+
+<a id="struktury"></a>
 
 ## Структуры
 
@@ -2030,6 +2084,8 @@ func main() {
 При инициализации будет структура с полями с zero-value.
 
 ---
+
+<a id="metody-struktur"></a>
 
 ## Методы структур
 
@@ -2170,6 +2226,8 @@ func main() {
 
 ---
 
+<a id="kak-vybrat-ptr-ili-po-znacheniyu"></a>
+
 ### Как выбрать ptr или по значению?
 
 ptr: если нам нужно избежать копирования больших структур и нужно менять поля структуры
@@ -2227,6 +2285,8 @@ func (v *Vertex) Abs() float64 {
 
 ---
 
+<a id="massivy-i-slaysy"></a>
+
 ## Массивы и слайсы
 
 Массив - это структура данных, содержащая набор элементов одного типа, лежащих подряд в памяти.
@@ -2265,6 +2325,8 @@ func main() {
 
 ---
 
+<a id="dobavlenie-elementov-v-slays"></a>
+
 ### Добавление элементов в слайс
 
 Добавление элементов в слайс выполняется через метод append:
@@ -2288,6 +2350,8 @@ func main() {
 
 ---
 
+<a id="udalenie-elementov-iz-slaysa"></a>
+
 ### Удаление элементов из слайса
 
 Удаление элементов из слайса можно сделать через append+срез:
@@ -2302,6 +2366,8 @@ fmt.Println(users)      //["Bob", "Alice", "Kate", "Tom", "Paul", "Mike", "Rober
 
 ---
 
+<a id="kopirovanie-slaysa"></a>
+
 ### Копирование слайса
 
 Копирование слайса можно сделать через
@@ -2313,6 +2379,8 @@ func copy( destination, source [] T) int
 copy копирует минимум длин source, destination. То есть если длина source = 3, длина destination = 5, то копируется только первые 3 элементов destination в source. Если же наоборот, то скопируются три элемента из destination в source, остальные элементы source будут zero-value.
 
 ---
+
+<a id="sortirovka-slaysa"></a>
 
 ### Сортировка слайса
 
@@ -2348,6 +2416,8 @@ func main() {
 
 ---
 
+<a id="sravnenie-slaysov-paket-reflect"></a>
+
 ### Сравнение слайсов, пакет reflect
 
 Для сравнения слайсов используется пакет reflect.
@@ -2375,6 +2445,8 @@ func main() {
 ```
 
 ---
+
+<a id="initsializatsiya-slaysa"></a>
 
 ### Инициализация слайса
 
@@ -2433,7 +2505,7 @@ func main() {
 
 ---
 
-<a id=important-slices></a>
+<a id="ochen-vazhno"></a>
 
 ### !!! ОЧЕНЬ ВАЖНО !!!
 
@@ -2525,6 +2597,8 @@ func main() {
 
 ---
 
+<a id="iterirovanie"></a>
+
 ## Итерирование
 
 Для итерирования в цикле или по мапе (дальше и для каналов) используется range. Результатом выполнения будет два значения при итерации:
@@ -2583,6 +2657,8 @@ for i, _ := range s {
 
 ---
 
+<a id="map"></a>
+
 ## Map
 
 Мапа мапит ключи и значения.
@@ -2617,6 +2693,8 @@ m2 := map[string]int{}
 ```
 
 ---
+
+<a id="vstavka-i-obnovlenie"></a>
 
 ### Вставка и обновление
 
@@ -2665,6 +2743,8 @@ fmt.Println(mm["Vlad"]) // &{40 Vlad}
 
 ---
 
+<a id="udalenie"></a>
+
 ### Удаление
 
 Удаление ключа из мапы происходит через delete функцию. Ее можно вызвать даже для nil мапы.
@@ -2688,6 +2768,8 @@ fmt.Println(len(m)) // 0
 
 ---
 
+<a id="poluchenie-znacheniya-po-klyuchu"></a>
+
 ### Получение значения по ключу
 
 При получении значения по ключу можно получить флаг ok, который указывает на то, что ключ существует в мапе.
@@ -2704,6 +2786,8 @@ elem, ok = m["Alex"] // elem=0, ok=false
 ```
 
 ---
+
+<a id="perebor-mapy"></a>
 
 ### Перебор мапы
 
@@ -2728,6 +2812,8 @@ for key, value := range m {
 ```
 
 ---
+
+<a id="vazhno"></a>
 
 ### Важно!!!
 
@@ -2814,11 +2900,15 @@ func main() {
 
 ---
 
+<a id="concurrency"></a>
+
 ### Concurrency
 
 Мапы небезопасны для записи, нужно использовать RWMutex, Mutex.
 
 ---
+
+<a id="interfeysy"></a>
 
 ## Интерфейсы
 
@@ -2982,6 +3072,8 @@ func describe(i I) {
 
 ---
 
+<a id="empty-interface"></a>
+
 ### Empty interface
 
 Интерфейс без единого метода interface{} - empty interface.
@@ -3016,6 +3108,8 @@ func describe(i interface{}) {
 ```
 
 ---
+
+<a id="stringer"></a>
 
 ### Stringer
 
@@ -3058,6 +3152,8 @@ func main() {
 
 ---
 
+<a id="esche-pro-interfeysy"></a>
+
 ### Еще про интерфейсы
 
 - Интерфесы могут быть как constraint для generic типов (подробнее в разделе про Generics)
@@ -3065,6 +3161,8 @@ func main() {
 - Интерфейсы могут иметь методы, другие интерфейсы, типы (но тогда их можно использовать только как constraint для generic и нельзя передавать в переменных), но не может иметь поля.
 
 ---
+
+<a id="errors"></a>
 
 ## Errors
 
@@ -3168,6 +3266,8 @@ func (s *service) GetUser(ctx context.Context, req *GetUserRequest) (*User, erro
 
 ---
 
+<a id="reader"></a>
+
 ## Reader
 
 Интерфейс Reader представляет собой чтение до конца потока данных.
@@ -3229,9 +3329,13 @@ func main() {
 
 ---
 
+<a id="generics-i-parametry-tipa"></a>
+
 ## Generics и Параметры типа
 
 ---
+
+<a id="parametry-tipa-v-funktsii"></a>
 
 ### Параметры типа в функциях
 
@@ -3363,6 +3467,8 @@ func [T any] Equal(a, b T) bool {
 ```
 
 ---
+
+<a id="constraint-dlya-generics"></a>
 
 ### Constraint для generics
 
@@ -3512,6 +3618,8 @@ func main() {
 
 ---
 
+<a id="generic-struktura"></a>
+
 ### Generic структура
 
 Generic может быть структура:
@@ -3606,6 +3714,8 @@ func main() {
 
 ---
 
+<a id="generic-interfeysy"></a>
+
 ### Generic интерфейсы
 
 Можно сделать generic interface:
@@ -3652,6 +3762,8 @@ func ProcessUser(repo Repository[User]) {
 
 ---
 
+<a id="raznitsa-generic-i-interface"></a>
+
 ### Разница generic и interface
 
 Generic обеспечивает типобезопасный код на этапе компиляции, а any = interface{} хранит значение любого типа при выполнении кода.
@@ -3672,6 +3784,8 @@ func Double[T ~int | ~int64 | ~float64](x T) T {
 ```
 
 ---
+
+<a id="gorutiny"></a>
 
 ## Горутины
 
@@ -3722,6 +3836,8 @@ func main() {
 
 ---
 
+<a id="kontekst-gorutin"></a>
+
 ### Контекст горутин
 
 Каждая горутина выполняется в своем контексте, независимо от функции main.
@@ -3729,6 +3845,8 @@ func main() {
 То есть даже если мы по порядку запускаем несколько горутин, нельзя предсказать, в каком порядке они завершатся.
 
 ---
+
+<a id="sintaksis-gorutin"></a>
 
 ### Синтаксис горутин
 
@@ -3779,6 +3897,8 @@ func main() {
 
 ---
 
+<a id="sleep"></a>
+
 ### Sleep
 
 Для работы со временем, таймерами, тикерами используется пакет time.
@@ -3820,6 +3940,8 @@ func sum(n int){
 ```
 
 ---
+
+<a id="sinhronizatsiya-gorutin-i-waitgroup"></a>
 
 ### Синхранизация горутин и WaitGroup
 
@@ -3916,6 +4038,8 @@ func main() {
 
 ---
 
+<a id="kanaly"></a>
+
 ## Каналы
 
 Каналы (channels) - инструмент коммуникации между горутинами.
@@ -3948,7 +4072,7 @@ ch3 := make(chan int, 10) // буферизованный канал с разм
 
 ---
 
-<a id=оператор-канала> </a>
+<a id="operator-kanala"></a>
 
 ### Оператор канала <-
 
@@ -3963,6 +4087,8 @@ val := <-ch
 ```
 
 ---
+
+<a id="nebuferizovannye-kanaly"></a>
 
 ### Небуферизованные каналы
 
@@ -4058,6 +4184,8 @@ func main() {
 
 ---
 
+<a id="obmen-dannyh-cherez-kanaly"></a>
+
 ### Обмен данных через каналы
 
 Если мы хотим обмениваться данными через каналы, то нужно чтобы одномоментно одна горутина отправляла данные в канал, а другая горутина получала данные из канала. Если мы определим отправление и получение данных через канал в самой функции main, то мы столкнемся с взаимоблокировкой.
@@ -4104,6 +4232,8 @@ func square(ch chan int){
 Тут мы сначала засунули число в канал, с ним что-то сделали, вернули в тот же канал, вычитали и вывели результат.
 
 ---
+
+<a id="buferizovannye-kanaly"></a>
 
 ### Буферизованные каналы
 
@@ -4231,6 +4361,8 @@ func main() {
 
 ---
 
+<a id="vozvraschenie-kanala"></a>
+
 ### Возвращение канала
 
 Канал может быть возвращаемым значением функции, но нужно аккуратно подходить к записи и чтению.
@@ -4279,6 +4411,8 @@ func createChan(n int) chan int{
 
 ---
 
+<a id="zakrytie-kanala"></a>
+
 ### Закрытие канала
 
 После инициализации канал готов передавать данные и находится в открытом состоянии, пока его не закрыть.
@@ -4318,6 +4452,8 @@ go func() {
 Читать из закрытого канала можно, вычитается zero-value.
 
 ---
+
+<a id="dvunapravlennye-i-odnonapravlennye-kanaly"></a>
 
 ### Двунаправленные и однонаправленные каналы
 
@@ -4372,6 +4508,8 @@ func main() {
 Теоретически можно создать однонаправленный канал, но когда мы запишем в него данные, то получить их будет невозможно и мы попадем в deadlock.
 
 ---
+
+<a id="sinhronizatsiya-gorutin-cherez-kanaly"></a>
 
 ### Синхронизация горутин через каналы
 
@@ -4450,6 +4588,8 @@ func main() {
 ```
 
 ---
+
+<a id="poluchenie-znacheniy-kanala-v-tsikle"></a>
 
 ### Получение значений канала в цикле
 
@@ -4639,6 +4779,8 @@ func main() {
 
 ---
 
+<a id="podhody-ispolzovaniya-kanalov"></a>
+
 ### Подходы использования каналов:
 
 Каналы не всегда заменяют мьютексы.
@@ -4663,6 +4805,8 @@ Mutex хороши для:
 - состояния объекта
 
 ---
+
+<a id="gonka-dannyh-i-obnaruzhenie"></a>
 
 ## Гонка данных и обнаружение
 
@@ -4737,6 +4881,8 @@ Goroutine 2 changes the value
 Использовать детектор гонок рекомендуется только в случае необходимости, так как он потребляет в 10 раз больше памяти и ресурсов процессора.
 
 ---
+
+<a id="mutex"></a>
 
 ## Mutex
 
@@ -4881,6 +5027,8 @@ func (s *Store) Data() map[string]int {
 Аналогично со slices и другими типами (в которых под капотом header)
 
 ---
+
+<a id="rwmutex"></a>
 
 ## RWMutex
 
@@ -5064,6 +5212,8 @@ func (m *LocalCache[T, V]) Clear() {
 
 ---
 
+<a id="nelzya"></a>
+
 ### Нельзя
 
 **Нельзя даунгрейдить Lock() до RLock() напрямую:**
@@ -5132,6 +5282,8 @@ RLock НЕ блокирует другой RLock.
 
 ---
 
+<a id="obrabotka-oshibok"></a>
+
 ## Обработка ошибок
 
 В Go программы выражают ошибку выполнения с помощью типа `error`.
@@ -5146,7 +5298,7 @@ RLock НЕ блокирует другой RLock.
 
 ---
 
-<a id=errors.New()></a>
+<a id="errors-new"></a>
 
 ### errors.New()
 
@@ -5175,6 +5327,8 @@ func (e *errorString) Error() string {
 ```
 
 ---
+
+<a id="wrapping"></a>
 
 ### Wrapping
 
@@ -5500,6 +5654,8 @@ func main() {
 
 ---
 
+<a id="unwrapping"></a>
+
 ### Unwrapping
 
 Unwrapping - развертывание ошибки.
@@ -5561,7 +5717,7 @@ err := fmt.Errorf("%w: %w", Err1, Err2)
 
 ---
 
-<a id=errors.Is()-и-errors.As()></a>
+<a id="errors-is-i-errors-as"></a>
 
 ### errors.Is() и errors.As()
 
@@ -5748,7 +5904,7 @@ func (c *Database) register(
 
 ---
 
-<a id=panic()-defer-recover()></a>
+<a id="panic-defer-recover"></a>
 
 ### panic(), defer, recover()
 
@@ -5996,6 +6152,8 @@ func main() {
 
 ---
 
+<a id="kontekst"></a>
+
 ## Контекст
 
 `context.Context` - интерфейс:
@@ -6040,6 +6198,8 @@ parent ctx
 
 ---
 
+<a id="context-background"></a>
+
 ### context.Background
 
 `context.Background() context.Context` - создает пустой контекст без cancel, timeout, deadline и value.
@@ -6066,6 +6226,8 @@ func SomeFunc(ctx context.Context) {
 
 ---
 
+<a id="context-todo"></a>
+
 ### context.TODO
 
 `context.TODO() context.Context` - создает пустой контекст без cancel, timeout, deadline и value.
@@ -6075,6 +6237,8 @@ func SomeFunc(ctx context.Context) {
 Лучше в prod коде не использовать.
 
 ---
+
+<a id="context-withvalue"></a>
 
 ### context.WithValue
 
@@ -6182,6 +6346,8 @@ func main() {
 - etc.
 
 ---
+
+<a id="context-withcancel"></a>
 
 ### context.WithCancel
 
@@ -6345,6 +6511,8 @@ func main() {
 
 ---
 
+<a id="context-withtimeout"></a>
+
 ### context.WithTimeout
 
 `context.WithTimeout(parent context.Context, timeout time.Duration) (ctx context.Context, cancel context.CancelFunc)` - создает контекст, который автоматически отменяется через timeout.
@@ -6445,6 +6613,8 @@ func main() {
 
 ---
 
+<a id="context-withdeadline"></a>
+
 ### context.WithDeadline
 
 `context.WithDeadline(parent context.Context, deadline time.Time) (ctx context.Context, cancel context.CancelFunc)` - создает контекст, который автоматически отменяется в определенный момент времени.
@@ -6460,6 +6630,8 @@ defer cancel()
 В принципе работает как с timeout, только отмена в конкретный момент времени.
 
 ---
+
+<a id="context-withcancelcause"></a>
 
 ### context.WithCancelCause
 
@@ -6488,6 +6660,8 @@ fmt.Println(context.Cause(ctx)) // user deleted request
 `context.Cause(ctx)` возвращает то же значение, что и `ctx.Err()`.
 
 ---
+
+<a id="context-afterfunc"></a>
 
 ### context.AfterFunc
 
@@ -6544,6 +6718,8 @@ func main() {
 
 ---
 
+<a id="context-shpora"></a>
+
 ### Context SHPORA
 
 `context.Background()`
@@ -6570,17 +6746,25 @@ func main() {
 
 - Создать дочерний контекст со значением.
 
+<a id="context-done"></a>
+
 `ctx.Done()`
 
 - Канал, который закрывается при отмене контекста.
+
+<a id="context-err"></a>
 
 `ctx.Err()`
 
 - Причина отмены: context.Canceled или context.DeadlineExceeded.
 
+<a id="context-deadline"></a>
+
 `ctx.Deadline()`
 
 - Получить deadline, если он есть.
+
+<a id="context-value"></a>
 
 `ctx.Value(key)`
 
@@ -6589,6 +6773,8 @@ func main() {
 `context.WithCancelCause(parent)`
 
 - Создать context с возможностью указать причину отмены.
+
+<a id="context-cause"></a>
 
 `context.Cause(ctx)`
 
@@ -6606,6 +6792,8 @@ context.WithValue(parent context.Context, key, val any) context.Context
 
 ---
 
+<a id="garbage-collector"></a>
+
 ## Garbage collector
 
 `GC`- Garbage collector, сборщик мусора.
@@ -6613,6 +6801,8 @@ context.WithValue(parent context.Context, key, val any) context.Context
 Он автоматически освобождает память кучи, которую уже не использует программа.
 
 ---
+
+<a id="kucha-i-stek"></a>
 
 ### Куча и стэк
 
@@ -6656,6 +6846,8 @@ _Heap_
 
 ---
 
+<a id="stek"></a>
+
 #### Стэк
 
 Стэк нужен для выполнения функций. Когда вызывается функция, создается stack frame - кусок стека для текущего вызова.
@@ -6680,6 +6872,8 @@ goroutine 3 -> stack 3
 
 ---
 
+<a id="kucha"></a>
+
 #### Куча
 
 Куча нужна для объектов, которые нельзя безопасно хранить только в стэке текущей функции.
@@ -6701,6 +6895,8 @@ func NewUser() *User {
 
 ---
 
+<a id="escape-analysis"></a>
+
 #### escape analysis
 
 В Go решение о размещении объектов на стеке и в heap принимает компилятор через escape analysis.
@@ -6718,6 +6914,8 @@ Escape analysis отвечает на вопрос:
 Единственное, основываясь на чем можно предположить, это по передаче указателей в функцию или создании указателей на объекты внутри функции.
 
 ---
+
+<a id="mehanizm-raboty"></a>
 
 ### Механизм работы
 
@@ -6842,7 +7040,7 @@ Sweep освобождает память от объектов, которые 
 
 ---
 
-<a id=gc-start></a>
+<a id="zapusk-gc"></a>
 
 ### Запуск GC
 
@@ -6865,6 +7063,8 @@ GOGC = 100
 То следующий GC будет, когда heap вырастет примерно до 200 MB
 
 ---
+
+<a id="zadat-gogc"></a>
 
 ### Задать GOGC
 
@@ -6925,6 +7125,8 @@ func main() {
 Если хочется руками в коде запустить GC, то можно использовать `runtime.GC()`.
 
 ---
+
+<a id="gomemlimit"></a>
 
 ### GOMEMLIMIT
 
@@ -7118,6 +7320,8 @@ func main() {
 
 ---
 
+<a id="pamyatka-po-gc"></a>
+
 ### Памятка по GC
 
 **Что лучше помнить:**
@@ -7143,6 +7347,8 @@ func main() {
 
 ---
 
+<a id="scheduler"></a>
+
 ## Scheduler
 
 `Scheduler` - это часть Go runtime, которая занимается планированием выполнения горутин.
@@ -7166,11 +7372,15 @@ func main() {
 
 ---
 
+<a id="gmp"></a>
+
 ### GMP
 
 Обычно scheduler объясняют через модель GMP (goroutine-machine-processor).
 
 ---
+
+<a id="goroutine"></a>
 
 #### Goroutine
 
@@ -7186,6 +7396,8 @@ func main() {
 
 ---
 
+<a id="machine"></a>
+
 #### Machine
 
 `M` - OS thread
@@ -7195,6 +7407,8 @@ func main() {
 Go runtime просит ОС создать/использует OS threads внутри процесса и выполняет на них горутины.
 
 ---
+
+<a id="processor"></a>
 
 #### Processor
 
@@ -7215,6 +7429,8 @@ P.S. Вообще тут как-то непонятно доконца.
 
 ---
 
+<a id="svyaz-gmp"></a>
+
 #### Связь GMP
 
 Чтобы выполнить Go-код, нужна связка M+P+G
@@ -7232,6 +7448,8 @@ P.S. Вообще тут как-то непонятно доконца.
 Например, если M ушел в blocking syscall, то он может отдать свой P другому M, так остальные goroutine продолжат выполняться.
 
 ---
+
+<a id="gomaxprocs"></a>
 
 #### GOMAXPROCS
 
@@ -7257,6 +7475,8 @@ GOMAXPROCS = 4
 Тут есть замечание, что привязка к CPU cores не строгая. ОС сама решает, на каких ядрах выполнять эти OS threads. GOMAXPROCS это про ограничение количества на единовременное выполнение.
 
 ---
+
+<a id="sostoyaniya-goroutine"></a>
 
 ### Состояния goroutine
 
@@ -7311,6 +7531,8 @@ Scheduler в это время выполняет другие goroutine.
 
 ---
 
+<a id="ocheredi-scheduler"></a>
+
 ### Очереди Scheduler
 
 У scheduler есть несколько очередей
@@ -7323,6 +7545,8 @@ Scheduler в это время выполняет другие goroutine.
 Новые горутины обычно попадают в local run queue текущего P.
 
 ---
+
+<a id="local-run-queue"></a>
 
 #### Local run queue
 
@@ -7340,6 +7564,8 @@ Scheduler в это время выполняет другие goroutine.
 
 ---
 
+<a id="global-run-queue"></a>
+
 #### Global run queue
 
 Есть также глобальная очередь runnable goroutines.
@@ -7349,6 +7575,8 @@ Scheduler в это время выполняет другие goroutine.
 Scheduler периодически проверяет global queue, чтобы goroutine оттуда не голодали.
 
 ---
+
+<a id="work-stealing"></a>
 
 ### Work stealing
 
@@ -7367,6 +7595,8 @@ Scheduler периодически проверяет global queue, чтобы g
 Это нужно, чтобы CPU не простаивали.
 
 ---
+
+<a id="chto-proishodit-pri-go-f"></a>
 
 ### Что происходит при `go f()`
 
@@ -7392,9 +7622,13 @@ go f()
 
 ---
 
+<a id="povedenie-pri-blokirovkah"></a>
+
 ### Поведение при блокировках
 
 ---
+
+<a id="pri-blokirovke-na-channel"></a>
 
 #### При блокировке на channel
 
@@ -7423,7 +7657,7 @@ runtime разбудит waiting горутину и переведет ее в 
 
 ---
 
-<a id=блокировка-при-time.sleep></a>
+<a id="pri-time-sleep"></a>
 
 #### При time.Sleep
 
@@ -7439,6 +7673,8 @@ time.Sleep(time.Second)
 
 ---
 
+<a id="pri-mutex"></a>
+
 #### При mutex
 
 ```go
@@ -7452,6 +7688,8 @@ mu.Lock()
 Когда mutex освобождается, одна из ожидающих goroutine становится runnable.
 
 ---
+
+<a id="network-i-o-i-netpoller"></a>
 
 #### Network I/O и netpoller
 
@@ -7483,6 +7721,8 @@ Runtime регистрирует ожидание в netpoller и паркует
 
 ---
 
+<a id="pri-syscall"></a>
+
 #### При syscall
 
 Если горутина делает blocking syscall, то OS thread может реально заблокироваться.
@@ -7499,6 +7739,8 @@ Runtime регистрирует ожидание в netpoller и паркует
 
 ---
 
+<a id="preemption"></a>
+
 ### Preemption
 
 `Preemption` - это принудительное прерывание долго работающей горутины.
@@ -7510,6 +7752,8 @@ Runtime регистрирует ожидание в netpoller и паркует
 Не писать бесконечные CPU loops без условий выхода.
 
 ---
+
+<a id="obschaya-shema-i-zaklyuchenie"></a>
 
 ### Общая схема и заключение
 
@@ -7601,6 +7845,8 @@ Scheduler/runtime знает о блокировках, которые прои�
 
 ---
 
+<a id="stroki"></a>
+
 ## Строки
 
 Строка в Go - неизменяемая последовательность байтов (можно воспринимать как срез байт только для чтения).
@@ -7655,6 +7901,8 @@ fmt.Println(string(runes)) // hello мир
 
 ---
 
+<a id="dlina-stroki"></a>
+
 ### Длина строки
 
 `len(s)` - возвращает длину строки в байтах, а не количество символов.
@@ -7676,6 +7924,8 @@ func main() {
 ```
 
 ---
+
+<a id="indeksatsiya-stroki"></a>
 
 ### Индексация строки
 
@@ -7724,6 +7974,8 @@ func main() {
 То есть так нельзя нормально работать с Unicode символами.
 
 ---
+
+<a id="rune"></a>
 
 ### Rune
 
@@ -7823,6 +8075,8 @@ func main() {
 
 ---
 
+<a id="range-po-stroke"></a>
+
 ### Range по строке
 
 Если использовать `range` по строке, то он будет идти по рунам, а индекс `i` - байтовый индекс начала руны.
@@ -7884,6 +8138,8 @@ func main() {
 
 ---
 
+<a id="izmenenie-strok"></a>
+
 ### Изменение строк
 
 Так как строки _immutable_, то Go не позволяет менять участок памяти строки даже через `[]rune` или `[]byte`.
@@ -7934,6 +8190,8 @@ func main() {
 ```
 
 ---
+
+<a id="srez-stroki"></a>
 
 ### Срез строки
 
@@ -7993,12 +8251,16 @@ func main() {
 
 ---
 
+<a id="strokovye-literaly"></a>
+
 ### Строковые литералы
 
 В Go есть два основных вида строковых литералов:
 
 - Interpreted string literal ""
 - Raw string literal ``
+
+<a id="interpreted-string-literal"></a>
 
 #### Interpreted string literal
 
@@ -8009,6 +8271,8 @@ fmt.Println("hello\nworld")
 // hello
 // world
 ```
+
+<a id="raw-string-literal"></a>
 
 #### Raw string literal
 
@@ -8023,6 +8287,8 @@ Raw может быть многострочной, поэтому удобна 
 
 ---
 
+<a id="sravnenie-strok"></a>
+
 ### Сравнение строк
 
 Строки сравнимы в лексикографическом порядке по байтам.
@@ -8033,6 +8299,8 @@ fmt.Println("abc" < "def")
 ```
 
 ---
+
+<a id="paket-strings"></a>
 
 ### Пакет strings
 
@@ -8146,6 +8414,8 @@ fmt.Println(strings.Index("hello", "x"))  // -1
 
 ---
 
+<a id="samye-chastye-funktsii"></a>
+
 ### Самые частые функции
 
 Вообще для работы со строками чаще всего используют пакеты:
@@ -8182,6 +8452,8 @@ b.Reset()
 ```
 
 ---
+
+<a id="string-builder"></a>
 
 ### String Builder
 
@@ -8235,5 +8507,7 @@ func writeName(b *strings.Builder, name string) {
 ```
 
 ---
+
+<a id="io"></a>
 
 ## IO
