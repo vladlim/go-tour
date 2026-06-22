@@ -151,6 +151,19 @@
   - [Preemption](#preemption)
   - [Общая схема и заключение](#общая-схема-и-заключение)
 - [Строки](#строки)
+  - [Длина строки](#длина-строки)
+  - [Индексация строки](#индексация-строки)
+  - [Rune](#rune)
+  - [Range по строке](#range-по-строке)
+  - [Изменение строк](#изменение-строк)
+  - [Срез строки](#срез-строки)
+  - [Строковые литералы](#строковые-литералы)
+    - [Interpreted string literal](#interpreted-string-literal)
+    - [Raw string literal](#raw-string-literal)
+  - [Сравнение строк](#сравнение-строк)
+  - [Пакет strings](#пакет-strings)
+  - [Самые частые функции](#самые-частые-функции)
+  - [String Builder](#string-builder)
 
 ---
 
@@ -7589,5 +7602,638 @@ Scheduler/runtime знает о блокировках, которые прои�
 ---
 
 ## Строки
+
+Строка в Go - неизменяемая последовательность байтов (можно воспринимать как срез байт только для чтения).
+
+`string` = `[]byte` = `[]uint8`
+
+В Go строки имеют кодировку UTF-8.
+
+`UTF-8` = `Unicode Transformation Format 8`
+
+1 byte = число от 0 до 255
+
+В `UTF-8`:
+| Символ | Количество байтов |
+| --- | --- |
+| ASCII(Латиница) | 1 byte |
+| Кириллица | 2 byte |
+| Часть символов | 3 byte |
+| Emoji | 4 byte |
+
+Строки _immutable_, то есть их нельзя изменить по индексу:
+
+```go
+s := "Hello"
+s[0] = 'J' // ошибка компиляции
+```
+
+Упрощенно строка внутри похожа на структуру:
+
+```go
+type stringHeader struct {
+	data *byte
+	len int
+}
+```
+
+То есть строка хранит указатель на массив байтов и длину в байтах.
+
+Для перевода массива байтов и массива рун в строку используется функция `string()`:
+
+```go
+
+str := "hello мир"
+
+bytes := []byte(str)
+runes := []rune(str)
+
+fmt.Println(string(bytes)) // hello мир
+fmt.Println(string(runes)) // hello мир
+
+```
+
+---
+
+### Длина строки
+
+`len(s)` - возвращает длину строки в байтах, а не количество символов.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	sl := "helloo"
+	sk := "привет"
+
+	fmt.Printf("%s : %d\n%s : %d\n", sl, len(sl), sk, len(sk))
+}
+// ❯ go run string_ex.go
+// helloo : 6
+// привет : 12
+```
+
+---
+
+### Индексация строки
+
+Если обратиться к элементу строки по индексу, то получим байт в массиве байтов, а не символ:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	sl := "helloo"
+	sk := "привет"
+
+	fmt.Printf("%s : %d\n", sl, len(sl))
+
+	fmt.Printf("str: %s\nbyte: %d\nsymbol: %c\n\n",
+		string(sl[0]),
+		sl[0],
+		sl[0])
+
+	fmt.Printf("%s : %d\n", sk, len(sk))
+	fmt.Printf("str: %s\nbyte: %d\nsymbol: %c\n2 bytes: %s\n\n",
+		string(sk[0]),
+		sk[0],
+		sk[0],
+		sk[0:2])
+}
+// ❯ go run string_ex.go
+// helloo : 6
+// str: h
+// byte: 104
+// symbol: h
+
+// привет : 12
+// str: Ð
+// byte: 208
+// symbol: Ð
+// 2 bytes: п
+```
+
+Мы получили непонятно что для кириллицы, потому что `sk[0]` это первый байт буквы `п`, а сама буква `п` занимает 2 байта.
+
+Но когда мы сделали срез из двух байт, то получили одну букву `п`.
+
+То есть так нельзя нормально работать с Unicode символами.
+
+---
+
+### Rune
+
+`rune` - alias для `int32`, Unicode code point (уникальное число, в которое UTF-8 кодирует символ).
+
+То есть одна руна обычно соответствует одному Unicode символу в смысле code point (но бывают символы типа `é`, которые представляют из себя две руны).
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	r := 'a'  // латиница
+	rs := "a" // латиница
+
+	k := 'а'  // кириллица
+	ks := "а" // кириллица
+
+	fmt.Printf("rune: %d, type: %T\n", r, r)
+	fmt.Printf("byte: %d, type: %T\n", rs[0], rs)
+
+	fmt.Printf("rune: %d, type: %T\n", k, k)
+	fmt.Printf("byte1: %d, byte2: %d, type: %T\n", ks[0], ks[1], ks)
+}
+// ❯ go run string_ex.go
+// rune: 97, type: int32
+// byte: 97, type: string
+// rune: 1072, type: int32
+// byte1: 208, byte2: 176, type: string
+```
+
+Одинарные кавычки в Go создают `rune literal`, а двойные кавычки в Go создают `string literal`.
+
+```go
+r := 'a' // rune
+s := "a" // string
+```
+
+Еще пример:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	samples := []string{
+		"a",
+		"п",
+		"世",
+		"😊",
+	}
+
+	for _, s := range samples {
+		fmt.Printf("%q: len(bytes)=%d bytes=%v runes=%v\n",
+			s, len(s), []byte(s), []rune(s))
+	}
+}
+// ❯ go run string_ex.go
+// "a": len(bytes)=1 bytes=[97] runes=[97] кт
+// "п": len(bytes)=2 bytes=[208 191] runes=[1087]
+// "世": len(bytes)=3 bytes=[228 184 150] runes=[19990]
+// "😊": len(bytes)=4 bytes=[240 159 152 138] runes=[128522]
+```
+
+Для подсчета количества символов в строке используется `utf8.RuneCountInString` или `len([]runte(str))`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"unicode/utf8"
+)
+
+func main() {
+	str := "привет world 😊 a"
+
+	fmt.Printf("len bytes: %d\n", len(str))
+	fmt.Printf("len runes: %d\n", utf8.RuneCountInString(str))
+	fmt.Printf("len runes: %d\n", len([]rune(str)))
+}
+// ❯ go run .
+// len bytes: 25
+// len runes: 16
+// len runes: 16
+
+// п р и в е т _ w o r l d _ 😊 _ a
+// 2 2 2 2 2 2 1 1 1 1 1 1 1  4  1 1 [кол-во байт]
+// итого 16 символов и 25 байт:
+// 6 символов кириллицей = 6 * 2 = 12 байт
+// 1 эмоджи = 4 * 1 = 4 байта
+// 9 символов латиницей = 9 * 1 = 9 байт
+// 9 + 4 + 12 = 25 байт
+```
+
+---
+
+### Range по строке
+
+Если использовать `range` по строке, то он будет идти по рунам, а индекс `i` - байтовый индекс начала руны.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	str := "привет world 😊 a"
+
+	for i, r := range str {
+		fmt.Printf("byte index: %d, rune: %c\n", i, r)
+	}
+
+	fmt.Printf("len bytes: %d\n", len(str))
+	fmt.Printf("len runes: %d\n", utf8.RuneCountInString(str))
+}
+// ❯ go run string_ex.go
+// byte index: 0, rune: п
+// byte index: 2, rune: р
+// byte index: 4, rune: и
+// byte index: 6, rune: в
+// byte index: 8, rune: е
+// byte index: 10, rune: т
+// byte index: 12, rune:
+// byte index: 13, rune: w
+// byte index: 14, rune: o
+// byte index: 15, rune: r
+// byte index: 16, rune: l
+// byte index: 17, rune: d
+// byte index: 18, rune:
+// byte index: 19, rune: 😊
+// byte index: 23, rune:
+// byte index: 24, rune: a
+// len bytes: 25
+// len runes: 16
+```
+
+В UTF-8 первый байт символа подсказывает, сколько всего байт занимает руна.
+
+Упрощенно:
+
+```bash
+0xxxxxxx               -> 1 байт
+110xxxxx 10xxxxxx      -> 2 байта
+1110xxxx 10xxxxxx ...  -> 3 байта
+11110xxx 10xxxxxx ...  -> 4 байта
+```
+
+То есть range делает примерно так:
+
+1. смотрит на байт с индексом i
+2. по первому байту понимает размер UTF-8 символа
+3. декодирует rune
+4. возвращает i и rune
+5. увеличивает i на размер этой rune в байтах
+
+---
+
+### Изменение строк
+
+Так как строки _immutable_, то Go не позволяет менять участок памяти строки даже через `[]rune` или `[]byte`.
+
+Поэтому когда мы преобразуем строку в `[]byte`, `[]rune` или обратно, то создается новая копия строки.
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	str := "abcde"
+
+	bytes := []byte(str) // тут создается копия
+
+	bytes[0] = 120 // x
+
+	fmt.Println(string(bytes)) // и тут создается копия
+	fmt.Println(str)
+
+	bytes[0] = 'X'
+
+	fmt.Println(string(bytes)) // и опять создается копия
+	fmt.Println(str)
+
+	runes := []rune(str) // тут создается копия
+	runes[0] = 0x41f     // п
+
+	fmt.Println(string(runes)) // и тут создается копия
+	fmt.Println(str)
+
+	runes[0] = 'X'
+	fmt.Println(string(runes)) // и опять создается копия
+	fmt.Println(str)
+}
+// ❯ go run .
+// xbcde
+// abcde
+// Xbcde
+// abcde
+// Пbcde
+// abcde
+// Xbcde
+// abcde
+```
+
+---
+
+### Срез строки
+
+Срез строки выполняется по байтовым индексам.
+
+То есть это скорее всего будет нормально работать только если в строке одни ASCII символы.
+
+Для Unicode символов уже будет опасно, потому что один символ может занимать >1 байта.
+
+Тогда лучше преобразовывать в слайс рун и резать его, потом обратно преобразовывать в string.
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	strK := "абвгде"
+	strL := "abcdef"
+
+	fmt.Printf("re-slized strK[1:3]: %s\n", strK[1:3])
+	fmt.Printf("re-slized strL[1:3]: %s\n", strL[1:3])
+
+	fmt.Println()
+
+	fmt.Printf("re-slized strK[2:6]: %s\n", strK[2:6])
+	fmt.Printf("re-slized strL[2:6]: %s\n", strL[2:6])
+
+	strKBytes := []byte(strK)
+	strKRunes := []rune(strK)
+
+	fmt.Printf("strKBytes[1:3]: %s\n", string(strKBytes[1:3]))
+	fmt.Printf("strKBytes[2:6]: %s\n", string(strKBytes[2:6]))
+
+	fmt.Printf("strKRunes[1:3]: %s\n", string(strKRunes[1:3]))
+	fmt.Printf("strKRunes[2:6]: %s\n", string(strKRunes[2:6]))
+}
+// ❯ go run .
+// re-slized strK[1:3]: ��
+// re-slized strL[1:3]: bc
+
+// re-slized strK[2:6]: бв
+// re-slized strL[2:6]: cdef
+// strKBytes[1:3]: ��
+// strKBytes[2:6]: бв
+// strKRunes[1:3]: бв
+// strKRunes[2:6]: вгде
+```
+
+Если реслайзнем так, что половина байт символа отвалится, то выведется символ `�`
+
+Это специальный символ для некорректных UTF-8 символов.
+
+Для среза строки лучше использовать руны.
+
+---
+
+### Строковые литералы
+
+В Go есть два основных вида строковых литералов:
+
+- Interpreted string literal ""
+- Raw string literal ``
+
+#### Interpreted string literal
+
+Interpreted потому что Go интерпретирует специальные последовательности внутри строки:
+
+```go
+fmt.Println("hello\nworld")
+// hello
+// world
+```
+
+#### Raw string literal
+
+Raw потому что они не интерпретируются, а берется как есть:
+
+```go
+fmt.Println(`hello\nworld`)
+// hello\nworld
+```
+
+Raw может быть многострочной, поэтому удобна для `SQL`, `regex`, `JSON`, многострочного текста и т.д.
+
+---
+
+### Сравнение строк
+
+Строки сравнимы в лексикографическом порядке по байтам.
+
+```go
+fmt.Println("abc" < "def")
+// true
+```
+
+---
+
+### Пакет strings
+
+Для работы с строками используется пакет `strings`.
+
+**strings.Contains**
+
+```go
+strings.Contains("hello world", "world") // true
+```
+
+**strings.HasPrefix**
+
+```go
+strings.HasPrefix("Bearer token", "Bearer ") // true
+```
+
+**strings.HasSuffix**
+
+```go
+strings.HasSuffix("file.txt", ".txt") // true
+```
+
+**strings.TrimSpace**
+
+```go
+s := "  hello \n"
+fmt.Println(strings.TrimSpace(s)) // hello
+```
+
+**strings.Trim**
+
+```go
+fmt.Println(strings.Trim("!!!hello!!!", "!")) // hello
+```
+
+**strings.ToLower, strings.ToUpper**
+
+```go
+fmt.Println(strings.ToLower("GoLang")) // golang
+fmt.Println(strings.ToUpper("GoLang")) // GOLANG
+```
+
+**strings.Split**
+
+```go
+parts := strings.Split("a,b,c", ",")
+fmt.Println(parts) // [a b c]
+```
+
+**strings.Join**
+
+```go
+parts := []string{"a", "b", "c"}
+s := strings.Join(parts, ",")
+
+fmt.Println(s) // a,b,c
+```
+
+**strings.Replace**
+
+```go
+s := strings.Replace("go go go", "go", "GO", 2)
+fmt.Println(s) // GO GO go
+```
+
+Последний аргумент — сколько замен делать.
+
+**strings.Replace(s, old, new, n)**
+
+Если n = -1, заменить все:
+
+```go
+s := strings.Replace("go go go", "go", "GO", -1)
+
+fmt.Println(s) // GO GO GO
+```
+
+**strings.ReplaceAll**
+
+```go
+s := strings.ReplaceAll("go go go", "go", "GO")
+fmt.Println(s) // GO GO GO
+```
+
+**strings.Fields**
+
+Разбивает по whitespace:
+
+```go
+s := " hello   world \n go "
+fields := strings.Fields(s)
+
+fmt.Println(fields) // [hello world go]
+```
+
+**strings.Repeat**
+
+```go
+fmt.Println(strings.Repeat("-", 10)) // ----------
+```
+
+**strings.Index**
+
+```go
+fmt.Println(strings.Index("hello", "ll")) // 2
+fmt.Println(strings.Index("hello", "x"))  // -1
+```
+
+Возвращает байтовый индекс.
+
+---
+
+### Самые частые функции
+
+Вообще для работы со строками чаще всего используют пакеты:
+
+- strings
+- strconv
+- unicode/utf8
+
+Самые частые методы:
+
+```go
+utf8.RuneCountInString(s)
+utf8.ValidString(s)
+
+unicode.IsLetter(r)
+unicode.IsDigit(r)
+unicode.IsSpace(r)
+unicode.ToUpper(r)
+unicode.ToLower(r)
+
+strconv.Itoa(i)
+strconv.Atoi(s)
+strconv.FormatInt(i, 10)
+strconv.ParseInt(s, 10, 64)
+strconv.FormatFloat(f, 'f', 2, 64)
+strconv.ParseFloat(s, 64)
+
+b.WriteString(s)
+b.WriteByte(',')
+b.WriteRune('п')
+b.String()
+b.Grow(n)
+b.Reset()
+```
+
+---
+
+### String Builder
+
+Для эффективной сборки строки по частям используется `strings.Builder`.
+
+Потому что при конкатенации строк происходит создание новой строки:
+
+```go
+s := "hello"
+s = s + " world" // тут создается новая строка
+```
+
+Используется так:
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	var b strings.Builder
+	defer b.Reset()
+
+	b.WriteString("Hello")
+	b.WriteByte(' ')
+	b.WriteString("Vlad")
+	b.WriteRune('!')
+	b.WriteByte('\n')
+	b.WriteString("Привет")
+
+	result := b.String()
+
+	fmt.Println(result)
+}
+// ❯ go run .
+// Hello Vlad!
+// Привет
+```
+
+**ВАЖНО!!!**
+
+Нельзя копировать `strings.Builder` после первого использования, если нужно, то передавать pointer на него:
+
+```go
+func writeName(b *strings.Builder, name string) {
+	b.WriteString(name)
+}
+```
+
+---
 
 ## IO
