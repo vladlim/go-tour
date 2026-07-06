@@ -74,14 +74,66 @@
 - [Подзапросы](#podzaprosy)
   - [Как работает `SELECT` в общем случае](#kak-rabotaet-select-v-obechem-sluchae)
   - [CTE](#CTE)
-- [](#)
-- [](#)
-- [](#)
-- [](#)
-- [](#)
-- [](#)
-- [](#)
-- [](#)
+- [Изменение данных](#izmenenie-dannykh)
+  - [Виртуальные таблицы](#virtualnye-tablitsy)
+  - [INSERT](#insert)
+  - [UPDATE](#update)
+  - [DELETE](#delete)
+  - [RETURNING](#returning)
+  - [USING](#using)
+  - [TRUNCATE](#truncate)
+- [Индексы](#indexes)
+  - [Цена индексов](#tsena-indexov)
+  - [Обновление индекса](#obnovlenie-indexov)
+  - [B-Tree](#b-tree)
+  - [Составной индекс](#sostavnoi-index)
+  - [Определение полей для индексации](#opredelenie-polei-indexacii)
+- [Оптимизация запросов](#optimizatsia-zaprosov)
+  - [Planner](#planner)
+  - [Сканирование таблиц](#scany)
+  - [Соединение таблиц](#soedineniya-tablits)
+  - [Cond](#cond)
+    - [Index Cond](#index-cond)
+    - [Filter](#filter-cond)
+    - [Hash Cond](#hash-cond)
+    - [Merge Cond](#merge-cond)
+    - [Join Filter](#join-filter)
+    - [Recheck Cond](#recheck-cond)
+  - [Поля плана](#polya-plana)
+  - [Разбор плана](#razbor-plana)
+  - [Время выполнения](#vremya-vypolneniya)
+  - [Дополнительные узлы](#dopolnitelnye-uzly)
+- [Storage](#storage)
+- [Vacuum](#vacuum)
+- [WAL](#wal)
+  - [Checkpoint](#checkpoint)
+- [Locks](#locks)
+  - [Уровни блокировок](#lock-levels)
+    - [Блокировки на уровне объектов (таблиц)](#lock-levels-table)
+    - [Блокировки на уровне строк (Row-Level Locks)](#lock-levels-rows)
+    - [Блокировки на уровне предикатов (Predicate Locks)](#lock-levels-predicates)
+    - [Блокировки в памяти (Lightweight Locks/Latches)](#lock-levels-memory)
+  - [Оптимистичные и пессимистичные блокировки](#optimistic-pessimistic-locking)
+    - [Пессимистичная блокировка](#pessimistic-locking)
+    - [Оптимистичная блокировка](#optimistic-locking)
+    - [Summary optimistic vs pessimistic locking](#summary-optimistic-vs-pessimistic-locking)
+- [Партицирование, шардирование и реплицирование](#partitioning-sharding-replication)
+  - [Партицирование](#partitioning)
+    - [Отличие от шардирования](#partitioning-vs-sharding)
+    - [Типы партицирования в PostgreSQL](#partitioning-types)
+      - [По диапазону (RANGE)](#partitioning-range)
+      - [По списку (LIST)](#partitioning-list)
+      - [По хэшу (HASH)](#partitioning-hash)
+    - [Когда НЕ нужно партицировать](#kogda-ne-nuzhno-pratitirovat)
+    - [Partition pruning](#partitioning-pruning)
+  - [Шардирование](#sharding)
+  - [Реплицирование](#replication)
+    - [Типы репликации](#replication-types)
+      - [Физическая репликация](#replication-physical)
+      - [Логическая репликация](#replication-logical)
+    - [Синхронная vs Асинхронная репликация](#replication-sync-async)
+    - [Что реплицирование НЕ решает](#replication-not-for-scaling-writes)
+  - [Шпаргалка: что когда использовать](#cheatsheet)
 
 ---
 
@@ -3234,6 +3286,8 @@ WHERE is_active = true;
 - соответствующая индексная запись тоже становится неактуальной
 - потом vacuum участвует в очистке мусора
 
+<a id=b-tree></a>
+
 ## B-Tree
 
 B-Tree - сбалансированное многоветвистое дерево поиска.
@@ -4343,7 +4397,7 @@ Lock - это право или ограничение на выполнение
 
 <a id=lock-levels-table></a>
 
-## Блокировки на уровне объектов (таблиц)\*\*
+### **Блокировки на уровне объектов (таблиц)**
 
 Эти блокировки накладываются командами DDL (`CREATE`, `ALTER`, `DROP`) и явными командами `LOCK`.
 
@@ -4365,7 +4419,7 @@ PostgreSQL старается использовать наименее слаб
 
 <a id=lock-levels-rows></a>
 
-## **Блокировки на уровне строк (Row-Level Locks)**
+### **Блокировки на уровне строк (Row-Level Locks)**
 
 Блокировки на строки не мешают обычному `SELECT` (чтению).
 
@@ -4395,13 +4449,13 @@ COMMIT;
 
 <a id=lock-levels-predicates></a>
 
-**Блокировки на уровне предикатов (Predicate Locks)**
+### **Блокировки на уровне предикатов (Predicate Locks)**
 
 Используются на уровне изоляции `Serializable` для предотвращения фантомного чтения. Блокируется не конкретная строка, а условие (`WHERE amount > 1000`). Это сложный механизм, основанный на блокировках в индексах и таблицах, который гарантирует, что никакая другая транзакция не сможет вставить или изменить данные, подпадающие под это условие.
 
 <a id=lock-levels-memory></a>
 
-## **Блокировки в памяти (Lightweight Locks/Latches)**
+### **Блокировки в памяти (Lightweight Locks/Latches)**
 
 Это внутренние, низкоуровневые блокировки, защищающие структуры данных в разделяемой памяти (буферный кеш, хеш-таблицы). Они очень кратковременны и не предназначены для управления пользовательскими данными. Разработчики приложений с ними напрямую не сталкиваются.
 
@@ -4523,7 +4577,7 @@ WHERE user_id = 1 AND version = 5;
 
 <a id=partitioning></a>
 
-# Партицирование
+## Партицирование
 
 **Партицирование** — это логическое разбиение одной большой таблицы на несколько физических кусков (партиций) с прозрачным доступом через родительскую таблицу.
 
@@ -4548,7 +4602,7 @@ WHERE user_id = 1 AND version = 5;
 
 <a id=partitioning-vs-sharding></a>
 
-## Отличие от шардирования
+### Отличие от шардирования
 
 | Признак            | Партицирование              | Шардирование                     |
 | ------------------ | --------------------------- | -------------------------------- |
@@ -4569,11 +4623,13 @@ WHERE user_id = 1 AND version = 5;
 
 <a id=partitioning-types></a>
 
-## Типы партицирования в PostgreSQL
+### Типы партицирования в PostgreSQL
 
 В PostgreSQL (начиная с 10 версии) есть декларативное партицирование: не нужно вручную писать триггеры и правила — достаточно описать структуру.
 
-### По диапазону (RANGE)
+<a id=partitioning-range></a>
+
+#### По диапазону (RANGE)
 
 Данные разбиваются по диапазонам значений. Самый частый тип.
 
@@ -4598,7 +4654,9 @@ CREATE TABLE orders_2025_02 PARTITION OF orders
 - Данные равномерно накапливаются по времени (логи, заказы, события).
 - Часто удаляются старые данные: `DROP PARTITION` старых месяцев — дешёвая операция.
 
-### По списку (LIST)
+<a id=partitioning-list></a>
+
+#### По списку (LIST)
 
 Данные разбиваются по конкретным значениям, не по диапазонам.
 
@@ -4620,7 +4678,9 @@ CREATE TABLE payments_completed PARTITION OF payments
 
 - Поле-классификатор с небольшим количеством значений (статус, тип, регион).
 
-### По хэшу (HASH)
+<a id=partitioning-hash></a>
+
+#### По хэшу (HASH)
 
 Данные разбиваются по хэшу от указанных полей.
 
@@ -4647,9 +4707,9 @@ CREATE TABLE sessions_p1 PARTITION OF sessions
 
 ---
 
-<a id=partitioning-when></a>
+<a id=kogda-ne-nuzhno-pratitirovat></a>
 
-## Когда НЕ нужно партицировать
+### Когда НЕ нужно партицировать
 
 Партицирование — не silver bullet. Есть сценарии, когда оно либо не даст выигрыша, либо сделает хуже.
 
@@ -4667,9 +4727,9 @@ CREATE TABLE sessions_p1 PARTITION OF sessions
 
 ---
 
-<a id=partitioning-planning></a>
+<a id=partitioning-pruning></a>
 
-## Partition pruning
+### Partition pruning
 
 Главный механизм, дающий ускорение при партицировании — **partition pruning** (отсечение партиций).
 
@@ -4690,7 +4750,7 @@ WHERE created_at >= '2025-02-15'
 
 <a id=sharding></a>
 
-# Шардирование
+## Шардирование
 
 **Шардирование** — это техника распределения данных одной логической таблицы по нескольким физическим серверам (шардам).
 
@@ -4739,7 +4799,7 @@ GROUP BY status;
 
 <a id=replication></a>
 
-# Реплицирование
+## Реплицирование
 
 **Реплицирование** — это копирование данных с одного сервера на другие.
 
@@ -4754,9 +4814,11 @@ GROUP BY status;
 
 <a id=replication-types></a>
 
-## Типы репликации
+### Типы репликации
 
-### Физическая репликация
+<a id=replication-physical></a>
+
+#### Физическая репликация
 
 Копирует изменения на уровне страниц WAL (Write-Ahead Log).
 
@@ -4767,7 +4829,9 @@ GROUP BY status;
 
 **Встроена в PostgreSQL**, настраивается через `primary_conninfo`, `recovery.conf` (в ранних версиях) и слоты репликации.
 
-### Логическая репликация
+<a id=replication-logical></a>
+
+#### Логическая репликация
 
 Копирует изменения на уровне строк (INSERT/UPDATE/DELETE), декодируя WAL в логические изменения.
 
@@ -4798,7 +4862,7 @@ PUBLICATION my_pub;
 
 <a id=replication-sync-async></a>
 
-## Синхронная vs Асинхронная репликация
+### Синхронная vs Асинхронная репликация
 
 | Характеристика            | Асинхронная                       | Синхронная                                |
 | ------------------------- | --------------------------------- | ----------------------------------------- |
@@ -4813,7 +4877,7 @@ PUBLICATION my_pub;
 
 <a id=replication-not-for-scaling-writes></a>
 
-## Что реплицирование НЕ решает
+### Что реплицирование НЕ решает
 
 Важно понимать: репликация не масштабирует запись.
 
@@ -4823,7 +4887,7 @@ PUBLICATION my_pub;
 
 <a id=cheatsheet></a>
 
-# Шпаргалка: что когда использовать
+## Шпаргалка: что когда использовать
 
 | Проблема                                 | Решение                   | Почему                                         |
 | ---------------------------------------- | ------------------------- | ---------------------------------------------- |
