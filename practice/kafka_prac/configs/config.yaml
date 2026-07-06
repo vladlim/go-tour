@@ -1,0 +1,12 @@
+env: local
+
+server:
+  host: localhost
+  port: 8000
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic: "test.events"
+  group_id: "kafka-prac-consumer-group"
+  consumer_count: 3

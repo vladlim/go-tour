@@ -1,0 +1,60 @@
+services:
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: kafka-prac
+    ports:
+      # Для Go-приложения, которое запускается на твоей машине
+      - "9092:9092"
+    environment:
+      # KRaft mode: один node одновременно broker и controller
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Kafka слушает три listener'а:
+      # INTERNAL   — для других контейнеров внутри docker compose
+      # EXTERNAL   — для приложений с твоей машины
+      # CONTROLLER — внутренний listener для KRaft controller
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+
+      # Kafka "рекламирует" клиентам адреса подключения.
+      # Контейнерам говорит: ходите на kafka:29092
+      # Хосту говорит: ходите на localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+
+      # Какие протоколы используются для listener'ов
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Listener для общения broker'ов между собой.
+      # У нас один broker, но Kafka все равно требует это указать.
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      # Listener для KRaft controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # Для одного broker replication factor должен быть 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Чтобы consumer group быстрее стартовала локально
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # Для новых topic'ов по умолчанию
+      KAFKA_NUM_PARTITIONS: 3
+
+      # Для обучения удобно
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui-prac
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      # Kafka UI находится внутри Docker-сети,
+      # поэтому подключается по INTERNAL listener'у
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
