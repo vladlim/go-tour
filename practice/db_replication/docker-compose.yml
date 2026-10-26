@@ -1,0 +1,74 @@
+services:
+  shard0-primary:
+    image: postgres:17-alpine
+    environment: &primary-env
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf", "-c", "wal_level=replica", "-c", "max_wal_senders=10", "-c", "wal_keep_size=64MB", "-c", "hot_standby=on"]
+    ports: ["5432:5432"]
+    volumes:
+      - shard0-primary:/var/lib/postgresql/data
+      - ./docker/primary-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/primary-pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    healthcheck: &primary-health
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  shard0-replica:
+    image: postgres:17-alpine
+    user: postgres
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PRIMARY_HOST: shard0-primary
+      REPLICATION_PASSWORD: replica
+    entrypoint: ["/bin/sh", "/replica-entrypoint.sh"]
+    ports: ["5433:5432"]
+    volumes:
+      - shard0-replica:/var/lib/postgresql/data
+      - ./docker/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    depends_on:
+      shard0-primary:
+        condition: service_healthy
+    healthcheck: &replica-health
+      test: ["CMD-SHELL", "pg_isready -U app -d app && test \"$(psql -U app -d app -tAc 'SELECT pg_is_in_recovery()')\" = t"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  shard1-primary:
+    image: postgres:17-alpine
+    environment: *primary-env
+    command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf", "-c", "wal_level=replica", "-c", "max_wal_senders=10", "-c", "wal_keep_size=64MB", "-c", "hot_standby=on"]
+    ports: ["5434:5432"]
+    volumes:
+      - shard1-primary:/var/lib/postgresql/data
+      - ./docker/primary-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/primary-pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    healthcheck: *primary-health
+
+  shard1-replica:
+    image: postgres:17-alpine
+    user: postgres
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      PRIMARY_HOST: shard1-primary
+      REPLICATION_PASSWORD: replica
+    entrypoint: ["/bin/sh", "/replica-entrypoint.sh"]
+    ports: ["5435:5432"]
+    volumes:
+      - shard1-replica:/var/lib/postgresql/data
+      - ./docker/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    depends_on:
+      shard1-primary:
+        condition: service_healthy
+    healthcheck: *replica-health
+
+volumes:
+  shard0-primary:
+  shard0-replica:
+  shard1-primary:
+  shard1-replica:
