@@ -1,0 +1,14 @@
+env: local
+
+server:
+  addr: ":8080"
+
+storage:
+  host: localhost
+  port: 5432
+  database: example_service
+  username: app
+  password: app_local
+  ssl_mode: disable
+  max_conns: 10
+  connect_timeout: 5s
